@@ -1,4 +1,4 @@
-.PHONY: help install install-dev clean lint format test test-coverage build upload upload-test check-version bump-patch bump-minor bump-major dev
+.PHONY: help install install-dev clean lint format test test-coverage build upload upload-test check-version bump-patch bump-minor bump-major dev tag release pre-commit
 
 SHELL := /bin/bash
 
@@ -130,21 +130,35 @@ dev: install-dev ## Set up development environment
 pre-commit: format lint test ## Run all checks before committing
 	@echo -e "${GREEN}✓ All pre-commit checks passed!${NC}"
 
-release: pre-commit check-version ## Full release process (test, build, upload)
+tag: ## Create and push a git tag for the current version
+	@echo -e "${BLUE}Creating tag v$(CURRENT_VERSION)...${NC}"
+	git tag -a v$(CURRENT_VERSION) -m "Release v$(CURRENT_VERSION)"
+	@echo -e "${GREEN}✓ Tag created${NC}"
+	@echo -e "${BLUE}Pushing tag to origin...${NC}"
+	git push origin v$(CURRENT_VERSION)
+	@echo -e "${GREEN}✓ Tag pushed successfully${NC}"
+
+release: pre-commit check-version ## Full release process (test, build, tag, upload)
 	@echo -e "${BLUE}Starting release process for version $(CURRENT_VERSION)...${NC}"
 	@echo -e "${YELLOW}This will:${NC}"
 	@echo "  1. Run all tests"
 	@echo "  2. Build packages"
-	@echo "  3. Upload to TestPyPI"
-	@echo "  4. Optionally upload to PyPI"
+	@echo "  3. Create and push a git tag"
+	@echo "  4. Upload to TestPyPI"
+	@echo "  5. Optionally upload to PyPI"
 	@read -p "Continue? (y/N) " -n 1 -r; \
 	echo; \
 	if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
+		$(MAKE) tag; \
 		$(MAKE) upload-test; \
 		echo -e "${YELLOW}Package uploaded to TestPyPI. Test it before uploading to PyPI.${NC}"; \
 		read -p "Upload to PyPI now? (y/N) " -n 1 -r; \
 		echo; \
 		if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
 			$(MAKE) upload; \
+			echo -e "${GREEN}✓ Release complete!${NC}"; \
+			echo -e "${YELLOW}Next steps:${NC}"; \
+			echo "  1. Create a release on GitHub for v$(CURRENT_VERSION)"; \
+			echo "  2. The package is now available on PyPI as $(PACKAGE_NAME)==$(CURRENT_VERSION)"; \
 		fi; \
 	fi
