@@ -1,0 +1,50 @@
+[project]
+name = "tavor"
+version = "0.1.1"
+authors = [
+  { name="Tavor", email="pkg@tavor.dev" },
+]
+description = "Python SDK for Tavor cloud sandboxes"
+readme = "README.md"
+requires-python = ">=3.9"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Operating System :: OS Independent",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+license = {text = "MIT"}
+dependencies = [
+    "requests>=2.28.0",
+    "typing-extensions>=4.0.0; python_version<'3.10'",
+]
+
+[project.optional-dependencies]
+async = [
+    "aiohttp>=3.8.0",
+]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.0.0",
+    "black>=23.0.0",
+    "mypy>=1.0.0",
+    "ruff>=0.1.0",
+    "types-requests>=2.28.0",
+    "aiohttp>=3.8.0",  # Include for dev testing
+]
+
+[project.urls]
+Homepage = "https://github.com/tavor-dev/sdk-py"
+Issues = "https://github.com/tavor-dev/sdk-py/issues"
+Documentation = "https://tavor.dev"
+
+[build-system]
+requires = ["hatchling >= 1.26"]
+build-backend = "hatchling.build"
