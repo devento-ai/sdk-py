@@ -89,10 +89,11 @@ with tavor.box() as box:
 ### Custom Box Configuration
 
 ```python
-from tavor import Tavor, BoxConfig, BoxTemplate
+from tavor import Tavor, BoxConfig
 
 config = BoxConfig(
-    template=BoxTemplate.PRO,  # More CPU and RAM
+    cpu=2,
+    mib_ram=2048,
     timeout=7200,  # 2 hours
     metadata={"project": "data-analysis"}
 )
@@ -155,8 +156,8 @@ finally:
 ### Configuration
 
 - `BoxConfig`: Configuration for box creation
-  - `template`: Use predefined templates (BoxTemplate.BASIC, PRO) - defaults to BASIC
-  - `template_id`: Use custom template ID
+  - `cpu`: Number of CPUs to allocate (default: 1)
+  - `mib_ram`: MiB RAM to allocate (default: 1024)
   - `timeout`: Maximum lifetime in seconds (default: 3600, or TAVOR_BOX_TIMEOUT env var)
   - `metadata`: Custom metadata dictionary
 
