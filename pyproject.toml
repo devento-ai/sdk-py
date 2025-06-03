@@ -1,6 +1,6 @@
 [project]
 name = "tavor"
-version = "0.1.1"
+version = "1.0.0"
 authors = [
   { name="Tavor", email="pkg@tavor.dev" },
 ]
