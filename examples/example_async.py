@@ -7,7 +7,7 @@ Replace 'your-api-key-here' with your actual Tavor API key.
 """
 
 import asyncio
-from tavor import AsyncTavor, BoxConfig, BoxTemplate, TavorError
+from tavor import AsyncTavor, BoxConfig, TavorError
 
 
 async def main():
@@ -42,7 +42,8 @@ async def main():
             # Example 3: Using custom configuration
             print("\n3. Using custom box configuration:")
             config = BoxConfig(
-                template=BoxTemplate.PRO,
+                cpu=4,  # 4 CPU cores
+                mib_ram=4096,  # 4 GB RAM
                 timeout=1800,  # 30 minutes
                 metadata={"example": "async", "language": "python"},
             )

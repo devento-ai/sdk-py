@@ -3,7 +3,7 @@
 import pytest
 from unittest.mock import Mock, patch
 
-from tavor import Tavor, BoxConfig, BoxTemplate, AuthenticationError
+from tavor import Tavor, BoxConfig, AuthenticationError
 
 
 class TestTavorClient:
@@ -148,17 +148,21 @@ class TestTavorClient:
 
     def test_box_config_validation(self):
         """Test BoxConfig validation."""
-        # Test with both template and template_id
-        with pytest.raises(
-            ValueError, match="Cannot specify both template and template_id"
-        ):
-            BoxConfig(template=BoxTemplate.BASIC, template_id="custom-template")
-
-        # Test default template
+        # Test default values
         config = BoxConfig()
-        assert config.template == BoxTemplate.BASIC
+        assert config.cpu is None
+        assert config.mib_ram is None
+        assert config.timeout == 600
+        assert config.metadata is None
 
-        # Test with custom template_id
-        config = BoxConfig(template_id="boxt-custom")
-        assert config.template_id == "boxt-custom"
-        assert config.template is None
+        # Test with specific cpu and ram
+        config = BoxConfig(cpu=2, mib_ram=4096)
+        assert config.cpu == 2
+        assert config.mib_ram == 4096
+
+        # Test with all parameters
+        config = BoxConfig(cpu=4, mib_ram=8192, timeout=1200, metadata={"env": "test"})
+        assert config.cpu == 4
+        assert config.mib_ram == 8192
+        assert config.timeout == 1200
+        assert config.metadata == {"env": "test"}

@@ -1,13 +1,11 @@
 """Tests for Tavor models."""
 
-import pytest
 from datetime import datetime
 
 from tavor import (
     Box,
     BoxStatus,
     BoxConfig,
-    BoxTemplate,
     CommandResult,
     CommandStatus,
     CommandOptions,
@@ -36,37 +34,31 @@ class TestModels:
         assert CommandStatus.FAILED.value == "failed"
         assert CommandStatus.ERROR.value == "error"
 
-    def test_box_template_enum(self):
-        """Test BoxTemplate enum values."""
-        assert BoxTemplate.BASIC == "Basic"
-        assert BoxTemplate.PRO == "Pro"
-
     def test_box_config_defaults(self):
         """Test BoxConfig default values."""
         config = BoxConfig()
-        assert config.template == BoxTemplate.BASIC
-        assert config.template_id is None
+        assert config.cpu is None
+        assert config.mib_ram is None
         assert config.timeout == 600
         assert config.metadata is None
 
-    def test_box_config_with_template(self):
-        """Test BoxConfig with specific template."""
-        config = BoxConfig(template=BoxTemplate.PRO)
-        assert config.template == BoxTemplate.PRO
-        assert config.template_id is None
+    def test_box_config_with_cpu(self):
+        """Test BoxConfig with specific CPU."""
+        config = BoxConfig(cpu=4)
+        assert config.cpu == 4
+        assert config.mib_ram is None
 
-    def test_box_config_with_template_id(self):
-        """Test BoxConfig with template_id."""
-        config = BoxConfig(template_id="boxt-custom-123")
-        assert config.template is None
-        assert config.template_id == "boxt-custom-123"
+    def test_box_config_with_mib_ram(self):
+        """Test BoxConfig with specific RAM."""
+        config = BoxConfig(mib_ram=8192)
+        assert config.cpu is None
+        assert config.mib_ram == 8192
 
-    def test_box_config_validation(self):
-        """Test BoxConfig validation."""
-        with pytest.raises(
-            ValueError, match="Cannot specify both template and template_id"
-        ):
-            BoxConfig(template=BoxTemplate.BASIC, template_id="custom-template")
+    def test_box_config_with_cpu_and_ram(self):
+        """Test BoxConfig with both CPU and RAM."""
+        config = BoxConfig(cpu=2, mib_ram=4096)
+        assert config.cpu == 2
+        assert config.mib_ram == 4096
 
     def test_box_config_with_metadata(self):
         """Test BoxConfig with metadata."""

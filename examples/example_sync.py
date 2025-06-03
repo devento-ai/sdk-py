@@ -6,7 +6,7 @@ This demonstrates basic usage patterns for the Tavor Python SDK.
 Replace 'your-api-key-here' with your actual Tavor API key.
 """
 
-from tavor import Tavor, BoxConfig, BoxTemplate, TavorError
+from tavor import Tavor, BoxConfig, TavorError
 
 
 def main():
@@ -27,7 +27,8 @@ def main():
         # Example 2: Using custom configuration
         print("\n2. Using custom box configuration:")
         config = BoxConfig(
-            template=BoxTemplate.PRO,
+            cpu=2,  # 2 CPU cores
+            mib_ram=2048,  # 2 GB RAM
             timeout=3600,  # 1 hour
             metadata={"example": "sync", "language": "python"},
         )

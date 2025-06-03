@@ -2,7 +2,7 @@
 
 import pytest
 
-from tavor import Tavor, AsyncTavor, BoxConfig, BoxTemplate
+from tavor import Tavor, AsyncTavor, BoxConfig
 
 
 class TestEnvironmentVariables:
@@ -45,27 +45,56 @@ class TestEnvironmentVariables:
         client = Tavor(api_key="sk-tavor-test")
         assert client.base_url == "https://api.tavor.dev"
 
-    def test_box_template_from_env(self, monkeypatch):
-        """Test box template from environment variable."""
-        monkeypatch.setenv("TAVOR_BOX_TEMPLATE", "Pro")
+    def test_box_cpu_from_env(self, monkeypatch):
+        """Test box CPU from environment variable."""
+        monkeypatch.setenv("TAVOR_BOX_CPU", "4")
 
         config = BoxConfig()
-        assert config.template == BoxTemplate.PRO
+        assert config.cpu == 4
 
-    def test_box_template_custom_id_from_env(self, monkeypatch):
-        """Test custom box template ID from environment variable."""
-        monkeypatch.setenv("TAVOR_BOX_TEMPLATE", "boxt-custom-123")
+    def test_box_mib_ram_from_env(self, monkeypatch):
+        """Test box RAM from environment variable."""
+        monkeypatch.setenv("TAVOR_BOX_MIB_RAM", "8192")
 
         config = BoxConfig()
-        assert config.template is None
-        assert config.template_id == "boxt-custom-123"
+        assert config.mib_ram == 8192
 
-    def test_box_template_explicit_overrides_env(self, monkeypatch):
-        """Test explicit template overrides environment."""
-        monkeypatch.setenv("TAVOR_BOX_TEMPLATE", "Pro")
+    def test_box_cpu_and_ram_from_env(self, monkeypatch):
+        """Test both CPU and RAM from environment variables."""
+        monkeypatch.setenv("TAVOR_BOX_CPU", "2")
+        monkeypatch.setenv("TAVOR_BOX_MIB_RAM", "4096")
 
-        config = BoxConfig(template=BoxTemplate.BASIC)
-        assert config.template == BoxTemplate.BASIC
+        config = BoxConfig()
+        assert config.cpu == 2
+        assert config.mib_ram == 4096
+
+    def test_box_cpu_explicit_overrides_env(self, monkeypatch):
+        """Test explicit CPU overrides environment."""
+        monkeypatch.setenv("TAVOR_BOX_CPU", "2")
+
+        config = BoxConfig(cpu=4)
+        assert config.cpu == 4
+
+    def test_box_mib_ram_explicit_overrides_env(self, monkeypatch):
+        """Test explicit RAM overrides environment."""
+        monkeypatch.setenv("TAVOR_BOX_MIB_RAM", "4096")
+
+        config = BoxConfig(mib_ram=8192)
+        assert config.mib_ram == 8192
+
+    def test_box_cpu_invalid_env_ignored(self, monkeypatch):
+        """Test invalid CPU in environment is ignored."""
+        monkeypatch.setenv("TAVOR_BOX_CPU", "invalid")
+
+        config = BoxConfig()
+        assert config.cpu is None
+
+    def test_box_mib_ram_invalid_env_ignored(self, monkeypatch):
+        """Test invalid RAM in environment is ignored."""
+        monkeypatch.setenv("TAVOR_BOX_MIB_RAM", "invalid")
+
+        config = BoxConfig()
+        assert config.mib_ram is None
 
     def test_box_timeout_from_env(self, monkeypatch):
         """Test box timeout from environment variable."""

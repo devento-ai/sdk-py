@@ -238,9 +238,13 @@ class AsyncTavor:
 
     async def _create_box(self, config: BoxConfig) -> Dict[str, Any]:
         """Create a new box via API."""
-        payload: Dict[str, Any] = {
-            "box_template": config.template_id or config.template
-        }
+        payload: Dict[str, Any] = {}
+
+        if config.cpu is not None:
+            payload["cpu"] = config.cpu
+
+        if config.mib_ram is not None:
+            payload["mib_ram"] = config.mib_ram
 
         if config.timeout is not None:
             payload["timeout"] = config.timeout

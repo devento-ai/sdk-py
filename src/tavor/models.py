@@ -31,36 +31,32 @@ class CommandStatus(str, Enum):
     ERROR = "error"
 
 
-class BoxTemplate(str, Enum):
-    """Predefined box templates."""
-
-    BASIC = "Basic"
-    PRO = "Pro"
-
-
 @dataclass
 class BoxConfig:
     """Configuration for creating a box."""
 
-    template: Optional[str] = None
-    template_id: Optional[str] = None
+    cpu: Optional[int] = None
+    mib_ram: Optional[int] = None
     timeout: Optional[int] = 600
     metadata: Optional[Dict[str, Any]] = None
 
     def __post_init__(self):
-        if self.template and self.template_id:
-            raise ValueError("Cannot specify both template and template_id")
-        if not self.template and not self.template_id:
-            # Check environment variable for default template
-            env_template = os.environ.get("TAVOR_BOX_TEMPLATE")
-            if env_template:
-                # Try to match against BoxTemplate enum values
+        # Check environment variables for defaults
+        if self.cpu is None:
+            env_cpu = os.environ.get("TAVOR_BOX_CPU")
+            if env_cpu:
                 try:
-                    self.template = BoxTemplate(env_template)
+                    self.cpu = int(env_cpu)
                 except ValueError:
-                    self.template_id = env_template
-            else:
-                self.template = BoxTemplate.BASIC
+                    pass
+
+        if self.mib_ram is None:
+            env_ram = os.environ.get("TAVOR_BOX_MIB_RAM")
+            if env_ram:
+                try:
+                    self.mib_ram = int(env_ram)
+                except ValueError:
+                    pass
 
         if self.timeout == 600:
             env_timeout = os.environ.get("TAVOR_BOX_TIMEOUT")

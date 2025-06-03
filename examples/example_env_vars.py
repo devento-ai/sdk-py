@@ -6,7 +6,7 @@ This demonstrates how to use environment variables for configuration.
 """
 
 import os
-from tavor import Tavor, BoxConfig, BoxTemplate
+from tavor import Tavor, BoxConfig
 
 
 def main():
@@ -16,7 +16,8 @@ def main():
     # Set environment variables (in real usage, these would be set in your shell)
     # os.environ['TAVOR_API_KEY'] = 'your-api-key-here'
     # os.environ['TAVOR_BASE_URL'] = 'https://api.tavor.dev'
-    # os.environ['TAVOR_BOX_TEMPLATE'] = 'Pro'
+    # os.environ['TAVOR_BOX_CPU'] = '2'
+    # os.environ['TAVOR_BOX_MIB_RAM'] = '2048'
     # os.environ['TAVOR_BOX_TIMEOUT'] = '1800'
 
     # Check if API key is set
@@ -37,7 +38,10 @@ def main():
         f"  TAVOR_BASE_URL: {os.environ.get('TAVOR_BASE_URL', 'Not set (using default)')}"
     )
     print(
-        f"  TAVOR_BOX_TEMPLATE: {os.environ.get('TAVOR_BOX_TEMPLATE', 'Not set (using default)')}"
+        f"  TAVOR_BOX_CPU: {os.environ.get('TAVOR_BOX_CPU', 'Not set (using default)')}"
+    )
+    print(
+        f"  TAVOR_BOX_MIB_RAM: {os.environ.get('TAVOR_BOX_MIB_RAM', 'Not set (using default)')}"
     )
     print(
         f"  TAVOR_BOX_TIMEOUT: {os.environ.get('TAVOR_BOX_TIMEOUT', 'Not set (using default)')}"
@@ -58,20 +62,23 @@ def main():
             # Show box configuration
             config = BoxConfig()
             print("\n   Box configuration from environment:")
-            print(f"   - Template: {config.template or config.template_id}")
+            print(f"   - CPU: {config.cpu or 'Default (1)'}")
+            print(f"   - RAM: {config.mib_ram or 'Default (1024 MiB)'} MiB")
             print(f"   - Timeout: {config.timeout} seconds")
 
         # Override environment variables with explicit configuration
         print("\n3. Override environment with explicit config:")
         custom_config = BoxConfig(
-            template=BoxTemplate.BASIC,  # Override environment template
+            cpu=1,  # Override environment CPU
+            mib_ram=1024,  # Override environment RAM
             timeout=900,  # Override environment timeout
         )
 
         with tavor.box(custom_config) as box:
             result = box.run("echo 'Using explicit configuration!'")
             print(f"   Output: {result.stdout.strip()}")
-            print(f"   - Template: {custom_config.template}")
+            print(f"   - CPU: {custom_config.cpu}")
+            print(f"   - RAM: {custom_config.mib_ram} MiB")
             print(f"   - Timeout: {custom_config.timeout} seconds")
 
         print("\n✅ Environment variable configuration works correctly!")

@@ -184,7 +184,8 @@ The SDK supports the following environment variables:
 
 - `TAVOR_API_KEY`: Your API key (alternative to passing it in code)
 - `TAVOR_BASE_URL`: API base URL (default: <https://api.tavor.dev>)
-- `TAVOR_BOX_TEMPLATE`: Default box template (e.g., `Basic`, `Pro`, or custom template ID)
+- `TAVOR_CPU`: CPU to allocate to the sandbox (default: 1)
+- `TAVOR_MIB_RAM`: MiB RAM to allocate to the sandbox (default: 1024)
 - `TAVOR_BOX_TIMEOUT`: Default box timeout in seconds (default: 3600)
 
 Example:
@@ -192,8 +193,9 @@ Example:
 ```bash
 export TAVOR_API_KEY="sk-tavor-..."
 export TAVOR_BASE_URL="https://api.tavor.dev"
-export TAVOR_BOX_TEMPLATE="Pro"
 export TAVOR_BOX_TIMEOUT="7200"
+export TAVOR_CPU="1"
+export TAVOR_MIB_RAM="1024"
 
 # Now you can initialize without parameters
 python -c "from tavor import Tavor; client = Tavor()"
