@@ -91,6 +91,26 @@ class Box:
     created_at: Optional[datetime] = None
     metadata: Optional[Dict[str, Any]] = None
     details: Optional[str] = None
+    hostname: Optional[str] = None
+
+    def get_public_url(self, port: int) -> str:
+        """Get the public web URL for accessing a specific port on the box.
+
+        Args:
+            port: The port number inside the VM to expose
+
+        Returns:
+            The public URL for accessing the port
+
+        Raises:
+            ValueError: If hostname is not available
+        """
+        if not self.hostname:
+            raise ValueError(
+                "Box does not have a hostname. Ensure the box is created and running."
+            )
+
+        return f"https://{port}-{self.hostname}"
 
 
 @dataclass

@@ -1,6 +1,7 @@
 """Tests for Tavor models."""
 
 from datetime import datetime
+import pytest
 
 from tavor import (
     Box,
@@ -103,6 +104,44 @@ class TestModels:
         assert isinstance(box.created_at, datetime)
         assert box.metadata == {"test": "value"}
         assert box.details == "Running successfully"
+
+    def test_box_model_with_hostname(self):
+        """Test Box dataclass with hostname."""
+        box = Box(
+            id="box-456",
+            status=BoxStatus.RUNNING,
+            hostname="box456.tavor.app",
+        )
+
+        assert box.id == "box-456"
+        assert box.hostname == "box456.tavor.app"
+
+    def test_box_get_public_url(self):
+        """Test Box.get_public_url method."""
+        box = Box(
+            id="box-789",
+            status=BoxStatus.RUNNING,
+            hostname="box789.tavor.app",
+        )
+
+        # Test valid port
+        url = box.get_public_url(8080)
+        assert url == "https://8080-box789.tavor.app"
+
+        # Test another port
+        url = box.get_public_url(3000)
+        assert url == "https://3000-box789.tavor.app"
+
+    def test_box_get_public_url_without_hostname(self):
+        """Test Box.get_public_url raises error when hostname is None."""
+        box = Box(
+            id="box-999",
+            status=BoxStatus.RUNNING,
+            hostname=None,
+        )
+
+        with pytest.raises(ValueError, match="Box does not have a hostname"):
+            box.get_public_url(8080)
 
     def test_command_options(self):
         """Test CommandOptions dataclass."""

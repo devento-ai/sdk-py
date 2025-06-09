@@ -78,6 +78,7 @@ class TestTavorClient:
                     "timeout": 3600,
                     "created_at": "2024-01-01T00:00:00Z",
                     "details": None,
+                    "hostname": "box789.tavor.app",
                 }
             ]
         }
@@ -90,6 +91,7 @@ class TestTavorClient:
         assert boxes[0].id == "box-123"
         assert boxes[0].status.value == "running"
         assert boxes[0].timeout == 3600
+        assert boxes[0].hostname == "box789.tavor.app"
 
     @patch("tavor.client.requests.Session")
     def test_box_context_manager(self, mock_session_class):
@@ -116,6 +118,7 @@ class TestTavorClient:
                     "status": "running",
                     "timeout": 3600,
                     "created_at": "2024-01-01T00:00:00Z",
+                    "hostname": "box-456.tavor.app",
                 }
             ]
         }
@@ -166,3 +169,56 @@ class TestTavorClient:
         assert config.mib_ram == 8192
         assert config.timeout == 1200
         assert config.metadata == {"env": "test"}
+
+    @patch("tavor.client.requests.Session")
+    def test_box_handle_get_public_url(self, mock_session_class):
+        """Test BoxHandle.get_public_url method."""
+        mock_session = Mock()
+        mock_session_class.return_value = mock_session
+
+        # Mock create box response with hostname
+        create_response = Mock()
+        create_response.status_code = 200
+        create_response.json.return_value = {
+            "id": "box-888",
+        }
+
+        # Mock list boxes response for refresh
+        list_response = Mock()
+        list_response.status_code = 200
+        list_response.json.return_value = {
+            "data": [
+                {
+                    "id": "box-888",
+                    "status": "running",
+                    "timeout": 3600,
+                    "created_at": "2024-01-01T00:00:00Z",
+                    "hostname": "box888.tavor.app",
+                }
+            ]
+        }
+
+        # Mock delete box response
+        delete_response = Mock()
+        delete_response.status_code = 204
+
+        mock_session.request.side_effect = [
+            create_response,
+            list_response,
+            list_response,  # Second refresh call from get_public_url (port 8080)
+            list_response,  # Third refresh call from get_public_url (port 3000)
+            delete_response,
+        ]
+
+        client = Tavor(api_key="sk-tavor-test")
+
+        with client.box() as box:
+            box.refresh()  # This triggers the list call
+
+            # Test get_public_url
+            url = box.get_public_url(8080)
+            assert url == "https://8080-box888.tavor.app"
+
+            # Test with different port
+            url = box.get_public_url(3000)
+            assert url == "https://3000-box888.tavor.app"

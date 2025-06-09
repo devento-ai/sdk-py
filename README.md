@@ -103,6 +103,34 @@ with tavor.box(config=config) as box:
     result = box.run("python train_model.py")
 ```
 
+### Web Support
+
+Boxes can expose services to the internet via public URLs. Each box gets a unique hostname, and you can access specific ports using the `get_public_url()` method:
+
+```python
+with tavor.box() as box:
+    # Start a web server on port 8080
+    box.run("python -m http.server 8080 &")
+
+    # Wait for server to start
+    box.run("sleep 2")
+
+    # Get the public URL for port 8080
+    public_url = box.get_public_url(8080)
+    print(f"Access your server at: {public_url}")
+    # Output: https://8080-uuid.tavor.app
+
+    # The service is now accessible from anywhere on the internet
+    box.run(f"curl {public_url}")
+```
+
+This feature is useful for:
+
+- Testing webhooks and callbacks
+- Sharing development servers temporarily
+- Demonstrating web applications
+- Running services that need to be accessible from external systems
+
 ### Async Operations
 
 ```python
@@ -164,6 +192,8 @@ finally:
 ### Models
 
 - `Box`: Represents a box instance
+  - `hostname`: Public hostname for web access (e.g., `uuid.tavor.app`)
+  - `get_public_url(port)`: Get the public URL for accessing a specific port
 - `CommandResult`: Result of command execution
   - `stdout`: Command output
   - `stderr`: Error output

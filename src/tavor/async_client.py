@@ -153,6 +153,22 @@ class AsyncBoxHandle:
         """Alias for stop()."""
         await self.stop()
 
+    def get_public_url(self, port: int) -> str:
+        """Get the public web URL for accessing a specific port on the box.
+
+        Args:
+            port: The port number inside the VM to expose
+
+        Returns:
+            The public URL for accessing the port
+
+        Raises:
+            ValueError: If hostname is not available
+        """
+        if not self._box:
+            raise TavorError("Box information not available")
+        return self._box.get_public_url(port)
+
     async def __aenter__(self) -> "AsyncBoxHandle":
         """Enter async context manager."""
         return self
@@ -283,6 +299,7 @@ class AsyncTavor:
                     timeout=box_data.get("timeout"),
                     created_at=box_data.get("created_at"),
                     details=box_data.get("details"),
+                    hostname=box_data.get("hostname"),
                 )
             )
 
