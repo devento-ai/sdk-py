@@ -121,3 +121,49 @@ class CommandOptions:
     on_stdout: Optional[Callable[[str], None]] = None
     on_stderr: Optional[Callable[[str], None]] = None
     poll_interval: float = 1.0
+
+
+@dataclass
+class SSEEvent:
+    """Server-Sent Event data."""
+
+    event: str
+    data: str
+
+
+@dataclass
+class SSEStartData:
+    """SSE start event data."""
+
+    command_id: str
+    status: str
+
+
+@dataclass
+class SSEOutputData:
+    """SSE output event data."""
+
+    stdout: Optional[str] = None
+    stderr: Optional[str] = None
+
+
+@dataclass
+class SSEStatusData:
+    """SSE status event data."""
+
+    status: str
+    exit_code: Optional[int] = None
+
+
+@dataclass
+class SSEEndData:
+    """SSE end event data."""
+
+    status: str
+
+
+@dataclass
+class SSEErrorData:
+    """SSE error event data."""
+
+    error: str

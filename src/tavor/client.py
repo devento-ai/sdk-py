@@ -2,6 +2,7 @@
 
 import os
 import time
+import json
 from contextlib import contextmanager
 from typing import Optional, List, Dict, Any, Generator
 import requests
@@ -21,6 +22,7 @@ from .models import (
     CommandStatus,
     CommandOptions,
 )
+from .sse_utils import parse_sse_stream
 
 
 class BoxHandle:
@@ -89,64 +91,173 @@ class BoxHandle:
         # Wait for box to be ready
         self.wait_until_ready()
 
-        # Queue the command
-        cmd_response = self._client._queue_command(self.id, command)
-        command_id = cmd_response["id"]
+        use_streaming = bool(options.on_stdout or options.on_stderr)
 
-        # Poll for completion
+        if use_streaming:
+            return self._run_with_streaming(command, options)
+        else:
+            cmd_response = self._client._queue_command(self.id, command, stream=False)
+            command_id = cmd_response["id"]
+
+            start_time = time.time()
+
+            while True:
+                cmd_data = self._client._get_command(self.id, command_id)
+
+                status = CommandStatus(cmd_data["status"])
+                if status in [
+                    CommandStatus.DONE,
+                    CommandStatus.FAILED,
+                    CommandStatus.ERROR,
+                ]:
+                    exit_code = 0 if status == CommandStatus.DONE else 1
+                    if status == CommandStatus.FAILED and cmd_data.get("stderr"):
+                        exit_code = 1
+
+                    return CommandResult(
+                        id=cmd_data["id"],
+                        command=cmd_data.get("command", ""),
+                        status=status,
+                        stdout=cmd_data.get("stdout") or "",
+                        stderr=cmd_data.get("stderr") or "",
+                        exit_code=exit_code,
+                        created_at=cmd_data.get("created_at"),
+                    )
+
+                if options.timeout and (time.time() - start_time) > options.timeout:
+                    raise CommandTimeoutError(
+                        f"Command timed out after {options.timeout} seconds"
+                    )
+
+                time.sleep(1.0)
+
+    def _run_with_streaming(
+        self, command: str, options: CommandOptions
+    ) -> CommandResult:
+        """Run a command with SSE streaming."""
+        url = urljoin(self._client.base_url, f"/api/v2/boxes/{self.id}")
+        headers = {
+            "X-API-Key": self._client.api_key,
+            "Content-Type": "application/json",
+        }
+
         start_time = time.time()
-        last_stdout_len = 0
-        last_stderr_len = 0
+        stdout = ""
+        stderr = ""
+        exit_code = 0
+        status = CommandStatus.QUEUED
+        command_id = None
 
-        while True:
-            cmd_data = self._client._get_command(self.id, command_id)
+        response = self._client.session.post(
+            url,
+            headers=headers,
+            json={"command": command, "stream": True},
+            stream=True,
+            timeout=None,  # Disable timeout for streaming
+        )
 
-            # Stream output if callbacks provided
-            if options.on_stdout and cmd_data.get("stdout"):
-                new_output = cmd_data["stdout"][last_stdout_len:]
-                if new_output:
-                    for line in new_output.splitlines(keepends=True):
-                        options.on_stdout(line)
-                    last_stdout_len = len(cmd_data["stdout"])
+        if response.status_code >= 400:
+            try:
+                error_data = response.json()
+                message = error_data.get("error") or error_data.get("message")
+            except Exception:
+                message = response.text
 
-            if options.on_stderr and cmd_data.get("stderr"):
-                new_output = cmd_data["stderr"][last_stderr_len:]
-                if new_output:
-                    for line in new_output.splitlines(keepends=True):
-                        options.on_stderr(line)
-                    last_stderr_len = len(cmd_data["stderr"])
-
-            # Check if command is complete
-            status = CommandStatus(cmd_data["status"])
-            if status in [
-                CommandStatus.DONE,
-                CommandStatus.FAILED,
-                CommandStatus.ERROR,
-            ]:
-                # Determine exit code
-                exit_code = 0 if status == CommandStatus.DONE else 1
-                if status == CommandStatus.FAILED and cmd_data.get("stderr"):
-                    # Try to extract exit code from stderr if available
-                    # This is a simplified approach, actual implementation might need enhancement
-                    exit_code = 1
-
-                return CommandResult(
-                    id=cmd_data["id"],
-                    command=cmd_data.get("command", ""),
-                    status=status,
-                    stdout=cmd_data.get("stdout", ""),
-                    stderr=cmd_data.get("stderr", ""),
-                    exit_code=exit_code,
-                    created_at=cmd_data.get("created_at"),
+            raise map_status_to_exception(
+                response.status_code,
+                message,
+                response.json()
+                if response.headers.get("content-type", "").startswith(
+                    "application/json"
                 )
+                else {},
+            )
 
-            # Check timeout
-            if options.timeout and (time.time() - start_time) > options.timeout:
-                raise CommandTimeoutError(
-                    f"Command timed out after {options.timeout} seconds"
-                )
+        buffer = ""
+        for chunk in response.iter_content(chunk_size=None, decode_unicode=True):
+            if chunk:
+                buffer += chunk
+                messages = buffer.split("\n\n")
+                buffer = messages.pop() if messages else ""
 
-            time.sleep(options.poll_interval)
+                for message in messages:
+                    if not message.strip():
+                        continue
+
+                    for sse_event in parse_sse_stream(message + "\n\n"):
+                        try:
+                            data = json.loads(sse_event.data)
+
+                            if sse_event.event == "start":
+                                command_id = data.get("command_id")
+
+                            elif sse_event.event == "output":
+                                if data.get("stdout"):
+                                    stdout += data["stdout"]
+                                    if options.on_stdout:
+                                        for line in data["stdout"].splitlines(
+                                            keepends=True
+                                        ):
+                                            if line:
+                                                options.on_stdout(line.rstrip("\n"))
+
+                                if data.get("stderr"):
+                                    stderr += data["stderr"]
+                                    if options.on_stderr:
+                                        for line in data["stderr"].splitlines(
+                                            keepends=True
+                                        ):
+                                            if line:
+                                                options.on_stderr(line.rstrip("\n"))
+
+                            elif sse_event.event == "status":
+                                status = CommandStatus(data.get("status"))
+                                if data.get("exit_code") is not None:
+                                    exit_code = data.get("exit_code")
+
+                            elif sse_event.event == "end":
+                                if data.get("status") == "error":
+                                    status = CommandStatus.ERROR
+                                elif data.get("status") == "timeout":
+                                    raise CommandTimeoutError("Command timed out")
+
+                                return CommandResult(
+                                    id=command_id or "",
+                                    command=command,
+                                    status=status,
+                                    stdout=stdout,
+                                    stderr=stderr,
+                                    exit_code=exit_code,
+                                    created_at=None,
+                                )
+
+                            elif sse_event.event == "error":
+                                raise TavorError(
+                                    f"Command error: {data.get('error', 'Unknown error')}"
+                                )
+
+                            elif sse_event.event == "timeout":
+                                raise CommandTimeoutError("Command timed out")
+
+                        except json.JSONDecodeError:
+                            # Ignore JSON parse errors
+                            pass
+
+                    if options.timeout and (time.time() - start_time) > options.timeout:
+                        raise CommandTimeoutError(
+                            f"Command timed out after {options.timeout} seconds"
+                        )
+
+        # If we get here, the stream ended without a proper completion
+        return CommandResult(
+            id=command_id or "",
+            command=command,
+            status=status,
+            stdout=stdout,
+            stderr=stderr,
+            exit_code=exit_code,
+            created_at=None,
+        )
 
     def stop(self) -> None:
         """Stop the box."""
@@ -270,11 +381,14 @@ class Tavor:
         """Delete a box via API."""
         self._request("DELETE", f"/api/v2/boxes/{box_id}")
 
-    def _queue_command(self, box_id: str, command: str) -> Dict[str, Any]:
+    def _queue_command(
+        self, box_id: str, command: str, stream: bool = False
+    ) -> Dict[str, Any]:
         """Queue a command on a box."""
-        response = self._request(
-            "POST", f"/api/v2/boxes/{box_id}", json={"command": command}
-        )
+        payload = {"command": command, "stream": False}
+        if stream:
+            payload["stream"] = True
+        response = self._request("POST", f"/api/v2/boxes/{box_id}", json=payload)
         return response.json()
 
     def _get_command(self, box_id: str, command_id: str) -> Dict[str, Any]:
