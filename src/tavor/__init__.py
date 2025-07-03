@@ -12,7 +12,7 @@ Basic usage:
         print(result.stdout)
 """
 
-__version__ = "1.2.0"
+__version__ = "1.3.0"
 
 from .client import Tavor, BoxHandle
 from .models import (
@@ -22,6 +22,7 @@ from .models import (
     CommandResult,
     CommandStatus,
     CommandOptions,
+    ExposedPort,
 )
 from .exceptions import (
     TavorError,
@@ -56,6 +57,7 @@ __all__ = [
     "CommandResult",
     "CommandStatus",
     "CommandOptions",
+    "ExposedPort",
     # Exceptions
     "TavorError",
     "APIError",

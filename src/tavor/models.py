@@ -167,3 +167,12 @@ class SSEErrorData:
     """SSE error event data."""
 
     error: str
+
+
+@dataclass
+class ExposedPort:
+    """Represents an exposed port mapping."""
+
+    proxy_port: int
+    target_port: int
+    expires_at: datetime

@@ -131,6 +131,34 @@ This feature is useful for:
 - Demonstrating web applications
 - Running services that need to be accessible from external systems
 
+### Port Exposing
+
+You can dynamically expose ports from inside the sandbox to random external ports. This is useful when you need to access services running inside the sandbox but don't know the port in advance or need multiple services:
+
+```python
+with tavor.box() as box:
+    # Start a service on port 3000 inside the sandbox
+    box.run("python -m http.server 3000 &")
+
+    # Give the server a moment to start
+    box.run("sleep 2")
+
+    # Expose the internal port 3000 to an external port
+    exposed_port = box.expose_port(3000)
+
+    print(f"Internal port {exposed_port.target_port} is now accessible on external port {exposed_port.proxy_port}")
+    print(f"Port mapping expires at: {exposed_port.expires_at}")
+
+    # You can now access the service using the proxy_port
+    # For example: http://sandbox-hostname:proxy_port
+```
+
+The `expose_port` method returns an `ExposedPort` object with:
+
+- `target_port` - The port inside the sandbox (what you requested)
+- `proxy_port` - The external port assigned by the system
+- `expires_at` - When this port mapping will expire
+
 ### Async Operations
 
 ```python
@@ -199,6 +227,10 @@ finally:
   - `stderr`: Error output
   - `exit_code`: Process exit code
   - `status`: Command status (QUEUED, RUNNING, DONE, FAILED, ERROR)
+- `ExposedPort`: Result of exposing a port
+  - `proxy_port`: External port assigned by the system
+  - `target_port`: Port inside the sandbox
+  - `expires_at`: When this port mapping expires
 
 ### Exceptions
 

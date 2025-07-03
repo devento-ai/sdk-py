@@ -21,6 +21,7 @@ from .models import (
     CommandResult,
     CommandStatus,
     CommandOptions,
+    ExposedPort,
 )
 from .sse_utils import parse_sse_stream
 
@@ -285,6 +286,36 @@ class BoxHandle:
         if not self._box:
             raise TavorError("Box information not available")
         return self._box.get_public_url(port)
+
+    def expose_port(self, target_port: int) -> ExposedPort:
+        """Expose a port from inside the sandbox to a random external port.
+
+        This allows external access to services running inside the sandbox.
+
+        Args:
+            target_port: The port number inside the sandbox to expose
+
+        Returns:
+            ExposedPort: Contains the proxy_port (external), target_port, and expires_at
+
+        Raises:
+            TavorError: If the box is not in a running state or if no ports are available
+        """
+        response = self._client._request(
+            "POST", f"/api/v2/boxes/{self.id}/expose_port", json={"port": target_port}
+        )
+        data = response.json()["data"]
+
+        # Parse the expires_at timestamp
+        from datetime import datetime
+
+        expires_at = datetime.fromisoformat(data["expires_at"].replace("Z", "+00:00"))
+
+        return ExposedPort(
+            proxy_port=data["proxy_port"],
+            target_port=data["target_port"],
+            expires_at=expires_at,
+        )
 
     def __enter__(self) -> "BoxHandle":
         """Enter context manager."""
