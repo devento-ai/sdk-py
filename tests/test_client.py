@@ -222,3 +222,88 @@ class TestTavorClient:
             # Test with different port
             url = box.get_public_url(3000)
             assert url == "https://3000-box888.tavor.app"
+
+    @patch("tavor.client.requests.Session")
+    def test_box_pause_resume(self, mock_session_class):
+        """Test box pause and resume functionality."""
+        mock_session = Mock()
+        mock_session_class.return_value = mock_session
+
+        # Mock create box response
+        create_response = Mock()
+        create_response.status_code = 200
+        create_response.json.return_value = {"id": "box-pause-test"}
+
+        # Mock list boxes response (for refresh after pause)
+        list_response_paused = Mock()
+        list_response_paused.status_code = 200
+        list_response_paused.json.return_value = {
+            "data": [
+                {
+                    "id": "box-pause-test",
+                    "status": "stopped",  # Paused state
+                    "timeout": 3600,
+                    "created_at": "2024-01-01T00:00:00Z",
+                    "details": None,
+                    "hostname": "box-pause.tavor.app",
+                }
+            ]
+        }
+
+        # Mock list boxes response (for refresh after resume)
+        list_response_resumed = Mock()
+        list_response_resumed.status_code = 200
+        list_response_resumed.json.return_value = {
+            "data": [
+                {
+                    "id": "box-pause-test",
+                    "status": "running",  # Resumed state
+                    "timeout": 3600,
+                    "created_at": "2024-01-01T00:00:00Z",
+                    "details": None,
+                    "hostname": "box-pause.tavor.app",
+                }
+            ]
+        }
+
+        # Mock pause response
+        pause_response = Mock()
+        pause_response.status_code = 200
+        pause_response.json.return_value = {}
+
+        # Mock resume response
+        resume_response = Mock()
+        resume_response.status_code = 200
+        resume_response.json.return_value = {}
+
+        # Mock delete box response
+        delete_response = Mock()
+        delete_response.status_code = 204
+
+        mock_session.request.side_effect = [
+            create_response,
+            pause_response,
+            list_response_paused,  # Refresh after pause
+            resume_response,
+            list_response_resumed,  # Refresh after resume
+            delete_response,
+        ]
+
+        client = Tavor(api_key="sk-tavor-test")
+
+        with client.box() as box:
+            # Test pause
+            box.pause()
+
+            # Verify pause request was made
+            pause_call = mock_session.request.call_args_list[1]
+            assert pause_call[0][0] == "POST"
+            assert pause_call[0][1].endswith("/api/v2/boxes/box-pause-test/pause")
+
+            # Test resume
+            box.resume()
+
+            # Verify resume request was made
+            resume_call = mock_session.request.call_args_list[3]
+            assert resume_call[0][0] == "POST"
+            assert resume_call[0][1].endswith("/api/v2/boxes/box-pause-test/resume")

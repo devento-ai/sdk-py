@@ -317,6 +317,28 @@ class BoxHandle:
             expires_at=expires_at,
         )
 
+    def pause(self) -> None:
+        """Pause the execution of the sandbox.
+
+        This temporarily stops the sandbox from running while preserving its state.
+
+        Raises:
+            TavorError: If the box cannot be paused
+        """
+        self._client._request("POST", f"/api/v2/boxes/{self.id}/pause")
+        self.refresh()
+
+    def resume(self) -> None:
+        """Resume the execution of a paused sandbox.
+
+        This continues the sandbox execution from where it was paused.
+
+        Raises:
+            TavorError: If the box cannot be resumed
+        """
+        self._client._request("POST", f"/api/v2/boxes/{self.id}/resume")
+        self.refresh()
+
     def __enter__(self) -> "BoxHandle":
         """Enter context manager."""
         return self
