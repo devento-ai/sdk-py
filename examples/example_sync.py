@@ -66,6 +66,21 @@ def main():
                 print("   ✓ Handled command failure gracefully")
                 print(f"   Exit code: {result.exit_code}")
 
+        # Example 5: Pause & resume
+        print("\n5. Pause & resume:")
+        with tavor.box() as box:
+            result = box.run("uptime")
+            print(f"   Output: {result.stdout.strip()}")
+            print(f"   Exit code: {result.exit_code}")
+
+            box.pause()
+
+            box.resume()
+
+            result = box.run("uptime")
+            print(f"   Output: {result.stdout.strip()}")
+            print(f"   Exit code: {result.exit_code}")
+
         print("\n✅ All examples completed successfully!")
 
     except TavorError as e:

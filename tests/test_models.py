@@ -23,8 +23,10 @@ class TestModels:
         assert BoxStatus.PROVISIONING.value == "provisioning"
         assert BoxStatus.BOOTING.value == "booting"
         assert BoxStatus.RUNNING.value == "running"
+        assert BoxStatus.PAUSED.value == "paused"
         assert BoxStatus.STOPPED.value == "stopped"
         assert BoxStatus.FAILED.value == "failed"
+        assert BoxStatus.FINISHED.value == "finished"
         assert BoxStatus.ERROR.value == "error"
 
     def test_command_status_enum(self):

@@ -241,7 +241,7 @@ class TestTavorClient:
             "data": [
                 {
                     "id": "box-pause-test",
-                    "status": "stopped",  # Paused state
+                    "status": "paused",  # Paused state
                     "timeout": 3600,
                     "created_at": "2024-01-01T00:00:00Z",
                     "details": None,

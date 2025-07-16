@@ -15,6 +15,7 @@ class BoxStatus(str, Enum):
     PROVISIONING = "provisioning"
     BOOTING = "booting"
     RUNNING = "running"
+    PAUSED = "paused"
     STOPPED = "stopped"
     FAILED = "failed"
     FINISHED = "finished"
