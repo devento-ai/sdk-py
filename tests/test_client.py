@@ -108,25 +108,23 @@ class TestTavorClient:
         delete_response = Mock()
         delete_response.status_code = 204
 
-        # Mock list boxes response (for status check)
-        list_response = Mock()
-        list_response.status_code = 200
-        list_response.json.return_value = {
-            "data": [
-                {
-                    "id": "box-456",
-                    "status": "running",
-                    "timeout": 3600,
-                    "created_at": "2024-01-01T00:00:00Z",
-                    "hostname": "box-456.tavor.app",
-                }
-            ]
+        # Mock get box response (for status check)
+        get_response = Mock()
+        get_response.status_code = 200
+        get_response.json.return_value = {
+            "data": {
+                "id": "box-456",
+                "status": "running",
+                "timeout": 3600,
+                "created_at": "2024-01-01T00:00:00Z",
+                "hostname": "box-456.tavor.app",
+            }
         }
 
         # Configure mock to return different responses
         mock_session.request.side_effect = [
             create_response,  # Create box
-            list_response,  # Status check
+            get_response,  # Status check
             delete_response,  # Delete box
         ]
 
@@ -183,19 +181,17 @@ class TestTavorClient:
             "id": "box-888",
         }
 
-        # Mock list boxes response for refresh
-        list_response = Mock()
-        list_response.status_code = 200
-        list_response.json.return_value = {
-            "data": [
-                {
-                    "id": "box-888",
-                    "status": "running",
-                    "timeout": 3600,
-                    "created_at": "2024-01-01T00:00:00Z",
-                    "hostname": "box888.tavor.app",
-                }
-            ]
+        # Mock get box response for refresh
+        get_response = Mock()
+        get_response.status_code = 200
+        get_response.json.return_value = {
+            "data": {
+                "id": "box-888",
+                "status": "running",
+                "timeout": 3600,
+                "created_at": "2024-01-01T00:00:00Z",
+                "hostname": "box888.tavor.app",
+            }
         }
 
         # Mock delete box response
@@ -204,9 +200,9 @@ class TestTavorClient:
 
         mock_session.request.side_effect = [
             create_response,
-            list_response,
-            list_response,  # Second refresh call from get_public_url (port 8080)
-            list_response,  # Third refresh call from get_public_url (port 3000)
+            get_response,
+            get_response,  # Second refresh call from get_public_url (port 8080)
+            get_response,  # Third refresh call from get_public_url (port 3000)
             delete_response,
         ]
 
@@ -234,36 +230,32 @@ class TestTavorClient:
         create_response.status_code = 200
         create_response.json.return_value = {"id": "box-pause-test"}
 
-        # Mock list boxes response (for refresh after pause)
-        list_response_paused = Mock()
-        list_response_paused.status_code = 200
-        list_response_paused.json.return_value = {
-            "data": [
-                {
-                    "id": "box-pause-test",
-                    "status": "paused",  # Paused state
-                    "timeout": 3600,
-                    "created_at": "2024-01-01T00:00:00Z",
-                    "details": None,
-                    "hostname": "box-pause.tavor.app",
-                }
-            ]
+        # Mock get box response (for refresh after pause)
+        get_response_paused = Mock()
+        get_response_paused.status_code = 200
+        get_response_paused.json.return_value = {
+            "data": {
+                "id": "box-pause-test",
+                "status": "paused",  # Paused state
+                "timeout": 3600,
+                "created_at": "2024-01-01T00:00:00Z",
+                "details": None,
+                "hostname": "box-pause.tavor.app",
+            }
         }
 
-        # Mock list boxes response (for refresh after resume)
-        list_response_resumed = Mock()
-        list_response_resumed.status_code = 200
-        list_response_resumed.json.return_value = {
-            "data": [
-                {
-                    "id": "box-pause-test",
-                    "status": "running",  # Resumed state
-                    "timeout": 3600,
-                    "created_at": "2024-01-01T00:00:00Z",
-                    "details": None,
-                    "hostname": "box-pause.tavor.app",
-                }
-            ]
+        # Mock get box response (for refresh after resume)
+        get_response_resumed = Mock()
+        get_response_resumed.status_code = 200
+        get_response_resumed.json.return_value = {
+            "data": {
+                "id": "box-pause-test",
+                "status": "running",  # Resumed state
+                "timeout": 3600,
+                "created_at": "2024-01-01T00:00:00Z",
+                "details": None,
+                "hostname": "box-pause.tavor.app",
+            }
         }
 
         # Mock pause response
@@ -283,9 +275,9 @@ class TestTavorClient:
         mock_session.request.side_effect = [
             create_response,
             pause_response,
-            list_response_paused,  # Refresh after pause
+            get_response_paused,  # Refresh after pause
             resume_response,
-            list_response_resumed,  # Refresh after resume
+            get_response_resumed,  # Refresh after resume
             delete_response,
         ]
 

@@ -46,14 +46,16 @@ class BoxHandle:
         if self._closed:
             raise TavorError("Box handle is closed")
 
-        # TODO: GET /api/v2/boxes/{box_id} instead of list_boxes here
-        boxes = self._client.list_boxes()
-        for box in boxes:
-            if box.id == self.id:
-                self._box = box
-                return self
-
-        raise BoxNotFoundError(404, f"Box {self.id} not found")
+        try:
+            response = self._client._request("GET", f"/api/v2/boxes/{self.id}")
+            self._box = Box(**response.json()["data"])
+            return self
+        except BoxNotFoundError:
+            raise
+        except Exception as e:
+            if hasattr(e, "status_code") and e.status_code == 404:
+                raise BoxNotFoundError(404, f"Box {self.id} not found")
+            raise
 
     def wait_until_ready(
         self, timeout: Optional[float] = 300, poll_interval: float = 1.0
