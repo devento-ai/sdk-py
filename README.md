@@ -1,5 +1,10 @@
 # Tavor Python SDK
 
+> [!WARNING]
+> **This package is being renamed to `devento`**. Please use the new package instead as this one will no longer be maintained. Check out [devento](https://pypi.org/project/devento/) on PyPI.
+> 
+> The current library can still be used with `TAVOR_BASE_URL="https://api.devento.ai"` but will receive no further updates.
+
 Official Python SDK for [Tavor](https://tavor.dev), the cloud sandbox platform that provides secure, isolated execution environments.
 
 ## Installation

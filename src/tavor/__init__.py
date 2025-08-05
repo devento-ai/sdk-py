@@ -12,7 +12,7 @@ Basic usage:
         print(result.stdout)
 """
 
-__version__ = "1.4.2"
+__version__ = "1.4.3"
 
 from .client import Tavor, BoxHandle
 from .models import (
