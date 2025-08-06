@@ -93,6 +93,11 @@ class Box:
     metadata: Optional[Dict[str, Any]] = None
     details: Optional[str] = None
     hostname: Optional[str] = None
+    started_at: Optional[datetime] = None
+    stopped_at: Optional[datetime] = None
+    ip_address: Optional[str] = None
+    resources: Optional[Dict[str, Any]] = None
+    runtime_seconds: Optional[int] = None
 
     def get_public_url(self, port: int) -> str:
         """Get the public web URL for accessing a specific port on the box.
