@@ -1,26 +1,27 @@
 #!/usr/bin/env python3
 """
-Example usage of the Tavor SDK - Synchronous version
+Example usage of the Devento SDK - Synchronous version
 
-This demonstrates basic usage patterns for the Tavor Python SDK.
-Replace 'your-api-key-here' with your actual Tavor API key.
+This demonstrates basic usage patterns for the Devento Python SDK.
+Replace 'your-api-key-here' with your actual Devento API key.
 """
 
-from tavor import Tavor, BoxConfig, TavorError
+from devento import Devento, BoxConfig, DeventoError
 
 
 def main():
     # Initialize the client with your API key
-    tavor = Tavor(api_key="your-api-key-here")
+    # devento = Devento(api_key="your-api-key-here")
+    devento = Devento()
 
-    print("🚀 Tavor SDK Example - Synchronous")
+    print("🚀 Devento SDK Example - Synchronous")
     print("-" * 40)
 
     try:
         # Example 1: Simple command execution with context manager
         print("1. Basic command execution:")
-        with tavor.box() as box:
-            result = box.run("echo 'Hello from Tavor!'")
+        with devento.box() as box:
+            result = box.run("echo 'Hello from Devento!'")
             print(f"   Output: {result.stdout.strip()}")
             print(f"   Exit code: {result.exit_code}")
 
@@ -33,7 +34,7 @@ def main():
             metadata={"example": "sync", "language": "python"},
         )
 
-        with tavor.box(config=config) as box:
+        with devento.box(config=config) as box:
             # Install a package and use it
             print("   Installing numpy...")
             box.run("pip install numpy")
@@ -45,7 +46,7 @@ def main():
 
         # Example 3: Streaming output
         print("\n3. Streaming command output:")
-        with tavor.box() as box:
+        with devento.box() as box:
 
             def print_stdout(line):
                 print(f"   [LIVE] {line.rstrip()}")
@@ -57,7 +58,7 @@ def main():
 
         # Example 4: Error handling
         print("\n4. Error handling:")
-        with tavor.box() as box:
+        with devento.box() as box:
             try:
                 # This should fail
                 result = box.run("exit 1")
@@ -68,7 +69,7 @@ def main():
 
         # Example 5: Pause & resume
         print("\n5. Pause & resume:")
-        with tavor.box() as box:
+        with devento.box() as box:
             result = box.run("uptime")
             print(f"   Output: {result.stdout.strip()}")
             print(f"   Exit code: {result.exit_code}")
@@ -83,8 +84,8 @@ def main():
 
         print("\n✅ All examples completed successfully!")
 
-    except TavorError as e:
-        print(f"\n❌ Tavor SDK error: {e}")
+    except DeventoError as e:
+        print(f"\n❌ Devento SDK error: {e}")
     except Exception as e:
         print(f"\n❌ Unexpected error: {e}")
 

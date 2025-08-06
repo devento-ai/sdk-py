@@ -1,4 +1,4 @@
-"""Data models for Tavor SDK."""
+"""Data models for Devento SDK."""
 
 import os
 from dataclasses import dataclass
@@ -44,7 +44,7 @@ class BoxConfig:
     def __post_init__(self):
         # Check environment variables for defaults
         if self.cpu is None:
-            env_cpu = os.environ.get("TAVOR_BOX_CPU")
+            env_cpu = os.environ.get("DEVENTO_BOX_CPU")
             if env_cpu:
                 try:
                     self.cpu = int(env_cpu)
@@ -52,7 +52,7 @@ class BoxConfig:
                     pass
 
         if self.mib_ram is None:
-            env_ram = os.environ.get("TAVOR_BOX_MIB_RAM")
+            env_ram = os.environ.get("DEVENTO_BOX_MIB_RAM")
             if env_ram:
                 try:
                     self.mib_ram = int(env_ram)
@@ -60,7 +60,7 @@ class BoxConfig:
                     pass
 
         if self.timeout == 600:
-            env_timeout = os.environ.get("TAVOR_BOX_TIMEOUT")
+            env_timeout = os.environ.get("DEVENTO_BOX_TIMEOUT")
             if env_timeout:
                 try:
                     self.timeout = int(env_timeout)

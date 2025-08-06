@@ -1,38 +1,38 @@
 #!/usr/bin/env python3
 """
-Example usage of the Tavor SDK - Web Support
+Example usage of the Devento SDK - Web Support
 
 This demonstrates how to use the web support feature to expose services
-to the internet from your Tavor boxes.
+to the internet from your Devento boxes.
 
-Replace 'your-api-key-here' with your actual Tavor API key.
+Replace 'your-api-key-here' with your actual Devento API key.
 """
 
-from tavor import Tavor, BoxConfig, TavorError
+from devento import Devento, BoxConfig, DeventoError
 import time
 
 
 def main():
     # Initialize the client with your API key
-    tavor = Tavor(api_key="your-api-key-here")
+    devento = Devento(api_key="your-api-key-here")
 
-    print("🌐 Tavor SDK Example - Web Support")
+    print("🌐 Devento SDK Example - Web Support")
     print("-" * 40)
 
     try:
         # Example 1: Basic web server with public URL
         print("1. Starting a simple web server:")
-        with tavor.box() as box:
+        with devento.box() as box:
             # Create a simple HTML file
             box.run("""cat > index.html << 'EOF'
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Tavor Web Demo</title>
+    <title>Devento Web Demo</title>
 </head>
 <body>
-    <h1>Hello from Tavor!</h1>
-    <p>This page is served from a Tavor box and accessible via the internet.</p>
+    <h1>Hello from Devento!</h1>
+    <p>This page is served from a Devento box and accessible via the internet.</p>
     <p>Current time: <span id="time"></span></p>
     <script>
         document.getElementById('time').textContent = new Date().toLocaleString();
@@ -64,7 +64,7 @@ EOF""")
 
         # Example 2: Multiple services on different ports
         print("\n2. Running multiple services:")
-        with tavor.box() as box:
+        with devento.box() as box:
             # Start multiple services
             box.run("python -m http.server 8000 > web1.log 2>&1 &")
             box.run("python -m http.server 8001 > web2.log 2>&1 &")
@@ -93,7 +93,7 @@ EOF""")
             metadata={"example": "web", "framework": "flask"},
         )
 
-        with tavor.box(config=config) as box:
+        with devento.box(config=config) as box:
             # Install Flask
             print("   Installing Flask...")
             box.run("pip install flask")
@@ -108,8 +108,8 @@ app = Flask(__name__)
 @app.route('/')
 def home():
     return """
-    <h1>Flask on Tavor</h1>
-    <p>This Flask app is running in a Tavor box!</p>
+    <h1>Flask on Devento</h1>
+    <p>This Flask app is running in a Devento box!</p>
     <p><a href="/api/status">Check API Status</a></p>
     """
 
@@ -118,7 +118,7 @@ def status():
     return jsonify({
         'status': 'running',
         'time': datetime.now().isoformat(),
-        'message': 'Flask app running on Tavor!'
+        'message': 'Flask app running on Devento!'
     })
 
 if __name__ == '__main__':
@@ -148,7 +148,7 @@ EOF''')
 
         # Example 4: Webhook receiver
         print("\n4. Webhook receiver example:")
-        with tavor.box() as box:
+        with devento.box() as box:
             # Create a simple webhook receiver
             box.run("""cat > webhook_server.py << 'EOF'
 from http.server import HTTPServer, BaseHTTPRequestHandler
@@ -192,7 +192,7 @@ EOF""")
             print("\n   Testing webhook with a sample payload...")
             box.run(f"""curl -X POST {webhook_url}/webhook \
                 -H "Content-Type: application/json" \
-                -d '{{"event": "test", "data": {{"message": "Hello Tavor!"}}}}'
+                -d '{{"event": "test", "data": {{"message": "Hello Devento!"}}}}'
             """)
 
             # Show the webhook logs
@@ -204,12 +204,12 @@ EOF""")
         print("\n✅ All web examples completed successfully!")
         print("\n💡 Tips:")
         print("   - Public URLs are in the format: https://{port}-{hostname}")
-        print("   - Each box gets a unique hostname like 'uuid.tavor.app'")
+        print("   - Each box gets a unique hostname like 'uuid.deven.to'")
         print("   - URLs are accessible from anywhere on the internet")
         print("   - Perfect for testing webhooks, sharing demos, or temporary services")
 
-    except TavorError as e:
-        print(f"\n❌ Tavor SDK error: {e}")
+    except DeventoError as e:
+        print(f"\n❌ Devento SDK error: {e}")
     except Exception as e:
         print(f"\n❌ Unexpected error: {e}")
 

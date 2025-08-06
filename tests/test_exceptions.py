@@ -1,7 +1,7 @@
-"""Tests for Tavor exceptions."""
+"""Tests for Devento exceptions."""
 
-from tavor import (
-    TavorError,
+from devento import (
+    DeventoError,
     APIError,
     AuthenticationError,
     ForbiddenError,
@@ -13,15 +13,15 @@ from tavor import (
     CommandTimeoutError,
     BoxTimeoutError,
 )
-from tavor.exceptions import map_status_to_exception
+from devento.exceptions import map_status_to_exception
 
 
 class TestExceptions:
     """Test exception classes and error mapping."""
 
-    def test_tavor_error_base(self):
-        """Test base TavorError."""
-        error = TavorError("Something went wrong")
+    def test_devento_error_base(self):
+        """Test base DeventoError."""
+        error = DeventoError("Something went wrong")
         assert str(error) == "Something went wrong"
         assert isinstance(error, Exception)
 
@@ -100,7 +100,7 @@ class TestExceptions:
         # Default message
         error = CommandTimeoutError()
         assert str(error) == "Command execution timed out"
-        assert isinstance(error, TavorError)
+        assert isinstance(error, DeventoError)
 
         # Custom message
         error = CommandTimeoutError("Command exceeded 30s limit")
@@ -111,7 +111,7 @@ class TestExceptions:
         # Default message
         error = BoxTimeoutError()
         assert str(error) == "Box timed out"
-        assert isinstance(error, TavorError)
+        assert isinstance(error, DeventoError)
 
         # Custom message
         error = BoxTimeoutError("Box exceeded 1 hour limit")

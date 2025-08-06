@@ -1,9 +1,9 @@
-"""Tests for Tavor models."""
+"""Tests for Devento models."""
 
 from datetime import datetime
 import pytest
 
-from tavor import (
+from devento import (
     Box,
     BoxStatus,
     BoxConfig,
@@ -112,27 +112,27 @@ class TestModels:
         box = Box(
             id="box-456",
             status=BoxStatus.RUNNING,
-            hostname="box456.tavor.app",
+            hostname="box456.deven.to",
         )
 
         assert box.id == "box-456"
-        assert box.hostname == "box456.tavor.app"
+        assert box.hostname == "box456.deven.to"
 
     def test_box_get_public_url(self):
         """Test Box.get_public_url method."""
         box = Box(
             id="box-789",
             status=BoxStatus.RUNNING,
-            hostname="box789.tavor.app",
+            hostname="box789.deven.to",
         )
 
         # Test valid port
         url = box.get_public_url(8080)
-        assert url == "https://8080-box789.tavor.app"
+        assert url == "https://8080-box789.deven.to"
 
         # Test another port
         url = box.get_public_url(3000)
-        assert url == "https://3000-box789.tavor.app"
+        assert url == "https://3000-box789.deven.to"
 
     def test_box_get_public_url_without_hostname(self):
         """Test Box.get_public_url raises error when hostname is None."""

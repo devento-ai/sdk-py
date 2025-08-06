@@ -1,1 +1,1 @@
-"""Tavor SDK tests."""
+"""Devento SDK tests."""

@@ -1,20 +1,20 @@
-"""Tavor SDK - Python client for Tavor cloud sandboxes.
+"""Devento SDK - Python client for Devento cloud sandboxes.
 
-Tavor provides secure, isolated execution environments for running code.
+Devento provides secure, isolated execution environments for running code.
 
 Basic usage:
-    from tavor import Tavor
+    from devento import Devento
 
-    tavor = Tavor(api_key="sk-tavor-...")
+    devento = Devento(api_key="sk-devento-...")
 
-    with tavor.box() as box:
+    with devento.box() as box:
         result = box.run("echo 'Hello, World!'")
         print(result.stdout)
 """
 
-__version__ = "1.4.3"
+__version__ = "0.1.0"
 
-from .client import Tavor, BoxHandle
+from .client import Devento, BoxHandle
 from .models import (
     Box,
     BoxConfig,
@@ -25,7 +25,7 @@ from .models import (
     ExposedPort,
 )
 from .exceptions import (
-    TavorError,
+    DeventoError,
     APIError,
     AuthenticationError,
     ForbiddenError,
@@ -40,7 +40,7 @@ from .exceptions import (
 
 # Optional async client - only import if aiohttp is available
 try:
-    from .async_client import AsyncTavor, AsyncBoxHandle  # noqa: F401
+    from .async_client import AsyncDevento, AsyncBoxHandle  # noqa: F401
 
     _async_available = True
 except ImportError:
@@ -48,7 +48,7 @@ except ImportError:
 
 __all__ = [
     # Main client
-    "Tavor",
+    "Devento",
     "BoxHandle",
     # Models
     "Box",
@@ -59,7 +59,7 @@ __all__ = [
     "CommandOptions",
     "ExposedPort",
     # Exceptions
-    "TavorError",
+    "DeventoError",
     "APIError",
     "AuthenticationError",
     "ForbiddenError",
@@ -73,4 +73,4 @@ __all__ = [
 ]
 
 if _async_available:
-    __all__.extend(["AsyncTavor", "AsyncBoxHandle"])
+    __all__.extend(["AsyncDevento", "AsyncBoxHandle"])

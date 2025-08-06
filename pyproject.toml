@@ -1,10 +1,10 @@
 [project]
-name = "tavor"
-version = "1.4.3"
+name = "devento"
+version = "0.1.0"
 authors = [
-  { name="Tavor", email="pkg@tavor.dev" },
+  { name="Devento", email="pkg@devento.ai" },
 ]
-description = "DEPRECATED: Use 'devento' package instead. Python SDK for Tavor cloud sandboxes"
+description = "Python SDK for Devento cloud sandboxes"
 readme = "README.md"
 requires-python = ">=3.9"
 classifiers = [
@@ -43,9 +43,9 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/tavor-dev/sdk-py"
-Issues = "https://github.com/tavor-dev/sdk-py/issues"
-Documentation = "https://tavor.dev"
+Homepage = "https://github.com/devento-ai/sdk-py"
+Issues = "https://github.com/devento-ai/sdk-py/issues"
+Documentation = "https://devento.ai"
 
 [build-system]
 requires = ["hatchling >= 1.26"]

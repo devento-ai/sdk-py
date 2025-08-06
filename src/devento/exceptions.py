@@ -1,15 +1,15 @@
-"""Tavor SDK exceptions."""
+"""Devento SDK exceptions."""
 
 from typing import Optional, Dict, Any
 
 
-class TavorError(Exception):
-    """Base exception for all Tavor SDK errors."""
+class DeventoError(Exception):
+    """Base exception for all Devento SDK errors."""
 
     pass
 
 
-class APIError(TavorError):
+class APIError(DeventoError):
     """Base exception for API-related errors."""
 
     def __init__(
@@ -66,14 +66,14 @@ class ServerError(APIError):
     pass
 
 
-class CommandTimeoutError(TavorError):
+class CommandTimeoutError(DeventoError):
     """Raised when a command execution times out."""
 
     def __init__(self, message: str = "Command execution timed out"):
         super().__init__(message)
 
 
-class BoxTimeoutError(TavorError):
+class BoxTimeoutError(DeventoError):
     """Raised when a box times out."""
 
     def __init__(self, message: str = "Box timed out"):

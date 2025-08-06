@@ -1,4 +1,4 @@
-"""Tavor SDK client implementation."""
+"""Devento SDK client implementation."""
 
 import os
 import time
@@ -9,7 +9,7 @@ import requests
 from urllib.parse import urljoin
 
 from .exceptions import (
-    TavorError,
+    DeventoError,
     BoxNotFoundError,
     CommandTimeoutError,
     map_status_to_exception,
@@ -29,7 +29,7 @@ from .sse_utils import parse_sse_stream
 class BoxHandle:
     """Handle for interacting with a box."""
 
-    def __init__(self, client: "Tavor", box_id: str, box: Optional[Box] = None):
+    def __init__(self, client: "Devento", box_id: str, box: Optional[Box] = None):
         self._client = client
         self.id = box_id
         self._box = box
@@ -44,7 +44,7 @@ class BoxHandle:
     def refresh(self) -> "BoxHandle":
         """Refresh box status from the API."""
         if self._closed:
-            raise TavorError("Box handle is closed")
+            raise DeventoError("Box handle is closed")
 
         try:
             response = self._client._request("GET", f"/api/v2/boxes/{self.id}")
@@ -78,7 +78,7 @@ class BoxHandle:
                 error_msg = f"Box failed to start: {self.status}"
                 if self._box and self._box.details:
                     error_msg += f" - {self._box.details}"
-                raise TavorError(error_msg)
+                raise DeventoError(error_msg)
 
             if timeout and (time.time() - start_time) > timeout:
                 raise CommandTimeoutError(
@@ -235,7 +235,7 @@ class BoxHandle:
                                 )
 
                             elif sse_event.event == "error":
-                                raise TavorError(
+                                raise DeventoError(
                                     f"Command error: {data.get('error', 'Unknown error')}"
                                 )
 
@@ -286,7 +286,7 @@ class BoxHandle:
         """
         self.refresh()
         if not self._box:
-            raise TavorError("Box information not available")
+            raise DeventoError("Box information not available")
         return self._box.get_public_url(port)
 
     def expose_port(self, target_port: int) -> ExposedPort:
@@ -301,7 +301,7 @@ class BoxHandle:
             ExposedPort: Contains the proxy_port (external), target_port, and expires_at
 
         Raises:
-            TavorError: If the box is not in a running state or if no ports are available
+            DeventoError: If the box is not in a running state or if no ports are available
         """
         response = self._client._request(
             "POST", f"/api/v2/boxes/{self.id}/expose_port", json={"port": target_port}
@@ -325,7 +325,7 @@ class BoxHandle:
         This temporarily stops the sandbox from running while preserving its state.
 
         Raises:
-            TavorError: If the box cannot be paused
+            DeventoError: If the box cannot be paused
         """
         self._client._request("POST", f"/api/v2/boxes/{self.id}/pause")
         self.refresh()
@@ -336,7 +336,7 @@ class BoxHandle:
         This continues the sandbox execution from where it was paused.
 
         Raises:
-            TavorError: If the box cannot be resumed
+            DeventoError: If the box cannot be resumed
         """
         self._client._request("POST", f"/api/v2/boxes/{self.id}/resume")
         self.refresh()
@@ -350,8 +350,8 @@ class BoxHandle:
         self.stop()
 
 
-class Tavor:
-    """Main Tavor client for interacting with boxes."""
+class Devento:
+    """Main Devento client for interacting with boxes."""
 
     def __init__(
         self,
@@ -360,24 +360,24 @@ class Tavor:
         timeout: int = 30,
         session: Optional[requests.Session] = None,
     ):
-        """Initialize Tavor client.
+        """Initialize Devento client.
 
         Args:
-            api_key: Your Tavor API key (sk-tavor-...). Defaults to TAVOR_API_KEY env var.
-            base_url: Base URL for Tavor API. Defaults to TAVOR_BASE_URL env var or https://api.tavor.dev.
+            api_key: Your Devento API key (sk-devento-...). Defaults to DEVENTO_API_KEY env var.
+            base_url: Base URL for Devento API. Defaults to DEVENTO_BASE_URL env var or https://api.devento.ai.
             timeout: Default timeout for HTTP requests
             session: Optional requests session to use
         """
         if api_key is None:
-            api_key = os.environ.get("TAVOR_API_KEY")
+            api_key = os.environ.get("DEVENTO_API_KEY")
 
         if not api_key:
             raise ValueError(
-                "API key is required. Set TAVOR_API_KEY environment variable or pass api_key parameter."
+                "API key is required. Set DEVENTO_API_KEY environment variable or pass api_key parameter."
             )
 
         if base_url is None:
-            base_url = os.environ.get("TAVOR_BASE_URL", "https://api.tavor.dev")
+            base_url = os.environ.get("DEVENTO_BASE_URL", "https://api.devento.ai")
 
         self.api_key = api_key
         self.base_url = base_url.rstrip("/")
@@ -484,7 +484,7 @@ class Tavor:
             BoxHandle: Handle for interacting with the box
 
         Example:
-            with tavor.box() as box:
+            with devento.box() as box:
                 result = box.run("echo 'Hello, World!'")
                 print(result.stdout)
         """

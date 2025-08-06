@@ -4,14 +4,14 @@ import pytest
 from datetime import datetime, timezone
 from unittest.mock import Mock, patch
 
-from tavor import Tavor, BoxHandle, ExposedPort
-from tavor.exceptions import TavorError
+from devento import Devento, BoxHandle, ExposedPort
+from devento.exceptions import DeventoError
 
 
 class TestExposePort:
     """Test expose_port functionality."""
 
-    @patch("tavor.client.requests.Session")
+    @patch("devento.client.requests.Session")
     def test_expose_port_success(self, mock_session_class):
         """Test successful port exposure."""
         # Setup mock
@@ -30,7 +30,7 @@ class TestExposePort:
         mock_session.request.return_value = mock_response
 
         # Create client and box handle
-        client = Tavor(api_key="sk-tavor-test")
+        client = Devento(api_key="sk-devento-test")
         box_handle = BoxHandle(client, "test-box-id")
 
         # Test expose_port
@@ -39,7 +39,7 @@ class TestExposePort:
         # Verify request
         mock_session.request.assert_called_with(
             "POST",
-            "https://api.tavor.dev/api/v2/boxes/test-box-id/expose_port",
+            "https://api.devento.ai/api/v2/boxes/test-box-id/expose_port",
             json={"port": 3000},
             timeout=30,
         )
@@ -52,7 +52,7 @@ class TestExposePort:
             2024, 12, 31, 23, 59, 59, tzinfo=timezone.utc
         )
 
-    @patch("tavor.client.requests.Session")
+    @patch("devento.client.requests.Session")
     def test_expose_port_different_port(self, mock_session_class):
         """Test exposing a different port."""
         # Setup mock
@@ -71,7 +71,7 @@ class TestExposePort:
         mock_session.request.return_value = mock_response
 
         # Create client and box handle
-        client = Tavor(api_key="sk-tavor-test")
+        client = Devento(api_key="sk-devento-test")
         box_handle = BoxHandle(client, "test-box-id")
 
         # Test expose_port
@@ -80,7 +80,7 @@ class TestExposePort:
         # Verify request
         mock_session.request.assert_called_with(
             "POST",
-            "https://api.tavor.dev/api/v2/boxes/test-box-id/expose_port",
+            "https://api.devento.ai/api/v2/boxes/test-box-id/expose_port",
             json={"port": 8080},
             timeout=30,
         )
@@ -89,7 +89,7 @@ class TestExposePort:
         assert result.proxy_port == 54321
         assert result.target_port == 8080
 
-    @patch("tavor.client.requests.Session")
+    @patch("devento.client.requests.Session")
     def test_expose_port_box_not_running(self, mock_session_class):
         """Test error when box is not running."""
         # Setup mock
@@ -103,16 +103,16 @@ class TestExposePort:
         mock_session.request.return_value = mock_response
 
         # Create client and box handle
-        client = Tavor(api_key="sk-tavor-test")
+        client = Devento(api_key="sk-devento-test")
         box_handle = BoxHandle(client, "test-box-id")
 
         # Test expose_port
-        with pytest.raises(TavorError) as exc_info:
+        with pytest.raises(DeventoError) as exc_info:
             box_handle.expose_port(3000)
 
         assert "Box is not in a running state" in str(exc_info.value)
 
-    @patch("tavor.client.requests.Session")
+    @patch("devento.client.requests.Session")
     def test_expose_port_no_ports_available(self, mock_session_class):
         """Test error when no ports are available."""
         # Setup mock
@@ -128,16 +128,16 @@ class TestExposePort:
         mock_session.request.return_value = mock_response
 
         # Create client and box handle
-        client = Tavor(api_key="sk-tavor-test")
+        client = Devento(api_key="sk-devento-test")
         box_handle = BoxHandle(client, "test-box-id")
 
         # Test expose_port
-        with pytest.raises(TavorError) as exc_info:
+        with pytest.raises(DeventoError) as exc_info:
             box_handle.expose_port(3000)
 
         assert "Could not allocate a proxy port" in str(exc_info.value)
 
-    @patch("tavor.client.requests.Session")
+    @patch("devento.client.requests.Session")
     def test_expose_port_with_timezone_handling(self, mock_session_class):
         """Test that different timezone formats are handled correctly."""
         # Setup mock
@@ -169,7 +169,7 @@ class TestExposePort:
             mock_session.request.return_value = mock_response
 
             # Create client and box handle
-            client = Tavor(api_key="sk-tavor-test")
+            client = Devento(api_key="sk-devento-test")
             box_handle = BoxHandle(client, "test-box-id")
 
             # Test expose_port

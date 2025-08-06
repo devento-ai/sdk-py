@@ -4,15 +4,15 @@ import pytest
 from datetime import datetime, timezone
 from unittest.mock import Mock, AsyncMock, patch
 
-from tavor import AsyncTavor, AsyncBoxHandle, ExposedPort
-from tavor.exceptions import TavorError
+from devento import AsyncDevento, AsyncBoxHandle, ExposedPort
+from devento.exceptions import DeventoError
 
 
 class TestAsyncExposePort:
     """Test async expose_port functionality."""
 
     @pytest.mark.asyncio
-    @patch("tavor.async_client.aiohttp.ClientSession")
+    @patch("devento.async_client.aiohttp.ClientSession")
     async def test_expose_port_success(self, mock_session_class):
         """Test successful port exposure."""
         # Setup mock
@@ -37,7 +37,7 @@ class TestAsyncExposePort:
         mock_response.__aexit__ = AsyncMock(return_value=None)
 
         # Create client and box handle
-        client = AsyncTavor(api_key="sk-tavor-test")
+        client = AsyncDevento(api_key="sk-devento-test")
         client.session = mock_session
         box_handle = AsyncBoxHandle(client, "test-box-id")
 
@@ -47,7 +47,7 @@ class TestAsyncExposePort:
         # Verify request
         mock_session.request.assert_called_with(
             "POST",
-            "https://api.tavor.dev/api/v2/boxes/test-box-id/expose_port",
+            "https://api.devento.ai/api/v2/boxes/test-box-id/expose_port",
             json={"port": 3000},
         )
 
@@ -60,7 +60,7 @@ class TestAsyncExposePort:
         )
 
     @pytest.mark.asyncio
-    @patch("tavor.async_client.aiohttp.ClientSession")
+    @patch("devento.async_client.aiohttp.ClientSession")
     async def test_expose_port_different_port(self, mock_session_class):
         """Test exposing a different port."""
         # Setup mock
@@ -85,7 +85,7 @@ class TestAsyncExposePort:
         mock_response.__aexit__ = AsyncMock(return_value=None)
 
         # Create client and box handle
-        client = AsyncTavor(api_key="sk-tavor-test")
+        client = AsyncDevento(api_key="sk-devento-test")
         client.session = mock_session
         box_handle = AsyncBoxHandle(client, "test-box-id")
 
@@ -95,7 +95,7 @@ class TestAsyncExposePort:
         # Verify request
         mock_session.request.assert_called_with(
             "POST",
-            "https://api.tavor.dev/api/v2/boxes/test-box-id/expose_port",
+            "https://api.devento.ai/api/v2/boxes/test-box-id/expose_port",
             json={"port": 8080},
         )
 
@@ -104,7 +104,7 @@ class TestAsyncExposePort:
         assert result.target_port == 8080
 
     @pytest.mark.asyncio
-    @patch("tavor.async_client.aiohttp.ClientSession")
+    @patch("devento.async_client.aiohttp.ClientSession")
     async def test_expose_port_box_not_running(self, mock_session_class):
         """Test error when box is not running."""
         # Setup mock
@@ -123,12 +123,12 @@ class TestAsyncExposePort:
         mock_response.__aexit__ = AsyncMock(return_value=None)
 
         # Create client and box handle
-        client = AsyncTavor(api_key="sk-tavor-test")
+        client = AsyncDevento(api_key="sk-devento-test")
         client.session = mock_session
         box_handle = AsyncBoxHandle(client, "test-box-id")
 
         # Test expose_port
-        with pytest.raises(TavorError) as exc_info:
+        with pytest.raises(DeventoError) as exc_info:
             await box_handle.expose_port(3000)
 
         assert "Box is not in a running state" in str(exc_info.value)

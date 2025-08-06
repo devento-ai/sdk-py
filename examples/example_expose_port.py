@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
-"""Example of exposing ports from a Tavor sandbox."""
+"""Example of exposing ports from a Devento sandbox."""
 
 import time
-from tavor import Tavor
+from devento import Devento
 
 
 def main():
-    # Create a Tavor client
-    client = Tavor()
+    # Create a Devento client
+    client = Devento()
 
     print("Creating a new sandbox...")
     with client.box() as box:

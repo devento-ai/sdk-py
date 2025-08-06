@@ -1,36 +1,31 @@
-# Tavor Python SDK
+# Devento Python SDK
 
-> [!WARNING]
-> **This package is being renamed to `devento`**. Please use the new package instead as this one will no longer be maintained. Check out [devento](https://pypi.org/project/devento/) on PyPI.
-> 
-> The current library can still be used with `TAVOR_BASE_URL="https://api.devento.ai"` but will receive no further updates.
-
-Official Python SDK for [Tavor](https://tavor.dev), the cloud sandbox platform that provides secure, isolated execution environments.
+Official Python SDK for [Devento](https://devento.ai), the cloud sandbox platform that provides secure, isolated execution environments.
 
 ## Installation
 
 ```bash
-pip install tavor
+pip install devento
 ```
 
 For async support:
 
 ```bash
-pip install tavor[async]
+pip install devento[async]
 ```
 
 ## Quick Start
 
 ```python
-from tavor import Tavor
+from devento import Devento
 
 # Initialize the client
-tavor = Tavor(api_key="sk-tavor-...")
+devento = Devento(api_key="sk-devento-...")
 
 # Create and use a sandbox
-with tavor.box() as box:
-    result = box.run("echo 'Hello from Tavor!'")
-    print(result.stdout)  # "Hello from Tavor!"
+with devento.box() as box:
+    result = box.run("echo 'Hello from Devento!'")
+    print(result.stdout)  # "Hello from Devento!"
 ```
 
 ## Features
@@ -47,11 +42,11 @@ with tavor.box() as box:
 ### Basic Command Execution
 
 ```python
-from tavor import Tavor
+from devento import Devento
 
-tavor = Tavor(api_key="sk-tavor-...")
+devento = Devento(api_key="sk-devento-...")
 
-with tavor.box() as box:
+with devento.box() as box:
     # Run simple commands
     result = box.run("pwd")
     print(f"Current directory: {result.stdout}")
@@ -67,22 +62,22 @@ with tavor.box() as box:
 ### Error Handling
 
 ```python
-from tavor import Tavor, CommandTimeoutError, TavorError
+from devento import Devento, CommandTimeoutError, DeventoError
 
 try:
-    with tavor.box() as box:
+    with devento.box() as box:
         # This will timeout
         result = box.run("sleep 120", timeout=5)
 except CommandTimeoutError as e:
     print(f"Command timed out: {e}")
-except TavorError as e:
+except DeventoError as e:
     print(f"Error: {e}")
 ```
 
 ### Streaming Output
 
 ```python
-with tavor.box() as box:
+with devento.box() as box:
     # Stream output as it's generated
     result = box.run(
         "for i in {1..5}; do echo \"Line $i\"; sleep 1; done",
@@ -94,7 +89,7 @@ with tavor.box() as box:
 ### Custom Box Configuration
 
 ```python
-from tavor import Tavor, BoxConfig
+from devento import Devento, BoxConfig
 
 config = BoxConfig(
     cpu=2,
@@ -103,7 +98,7 @@ config = BoxConfig(
     metadata={"project": "data-analysis"}
 )
 
-with tavor.box(config=config) as box:
+with devento.box(config=config) as box:
     # Run resource-intensive tasks
     result = box.run("python train_model.py")
 ```
@@ -113,7 +108,7 @@ with tavor.box(config=config) as box:
 Boxes can expose services to the internet via public URLs. Each box gets a unique hostname, and you can access specific ports using the `get_public_url()` method:
 
 ```python
-with tavor.box() as box:
+with devento.box() as box:
     # Start a web server on port 8080
     box.run("python -m http.server 8080 &")
 
@@ -123,7 +118,7 @@ with tavor.box() as box:
     # Get the public URL for port 8080
     public_url = box.get_public_url(8080)
     print(f"Access your server at: {public_url}")
-    # Output: https://8080-uuid.tavor.app
+    # Output: https://8080-uuid.deven.to
 
     # The service is now accessible from anywhere on the internet
     box.run(f"curl {public_url}")
@@ -141,7 +136,7 @@ This feature is useful for:
 You can dynamically expose ports from inside the sandbox to random external ports. This is useful when you need to access services running inside the sandbox but don't know the port in advance or need multiple services:
 
 ```python
-with tavor.box() as box:
+with devento.box() as box:
     # Start a service on port 3000 inside the sandbox
     box.run("python -m http.server 3000 &")
 
@@ -168,11 +163,11 @@ The `expose_port` method returns an `ExposedPort` object with:
 
 ```python
 import asyncio
-from tavor import AsyncTavor
+from devento import AsyncDevento
 
 async def run_parallel_tasks():
-    async with AsyncTavor(api_key="sk-tavor-...") as tavor:
-        async with tavor.box() as box:
+    async with AsyncDevento(api_key="sk-devento-...") as devento:
+        async with devento.box() as box:
             # Run multiple commands in parallel
             results = await asyncio.gather(
                 box.run("task1.py"),
@@ -190,7 +185,7 @@ asyncio.run(run_parallel_tasks())
 
 ```python
 # Create a box without automatic cleanup
-box = tavor.create_box()
+box = devento.create_box()
 
 try:
     # Wait for box to be ready
@@ -211,21 +206,21 @@ finally:
 
 ### Client Classes
 
-- `Tavor`: Main client for synchronous operations
-- `AsyncTavor`: Client for async operations (requires `pip install tavor[async]`)
+- `Devento`: Main client for synchronous operations
+- `AsyncDevento`: Client for async operations (requires `pip install devento[async]`)
 
 ### Configuration
 
 - `BoxConfig`: Configuration for box creation
   - `cpu`: Number of CPUs to allocate (default: 1)
   - `mib_ram`: MiB RAM to allocate (default: 1024)
-  - `timeout`: Maximum lifetime in seconds (default: 3600, or TAVOR_BOX_TIMEOUT env var)
+  - `timeout`: Maximum lifetime in seconds (default: 3600, or DEVENTO_BOX_TIMEOUT env var)
   - `metadata`: Custom metadata dictionary
 
 ### Models
 
 - `Box`: Represents a box instance
-  - `hostname`: Public hostname for web access (e.g., `uuid.tavor.app`)
+  - `hostname`: Public hostname for web access (e.g., `uuid.deven.to`)
   - `get_public_url(port)`: Get the public URL for accessing a specific port
 - `CommandResult`: Result of command execution
   - `stdout`: Command output
@@ -239,7 +234,7 @@ finally:
 
 ### Exceptions
 
-- `TavorError`: Base exception for all SDK errors
+- `DeventoError`: Base exception for all SDK errors
 - `APIError`: Base for API-related errors
 - `AuthenticationError`: Invalid API key
 - `BoxNotFoundError`: Box doesn't exist
@@ -250,23 +245,23 @@ finally:
 
 The SDK supports the following environment variables:
 
-- `TAVOR_API_KEY`: Your API key (alternative to passing it in code)
-- `TAVOR_BASE_URL`: API base URL (default: <https://api.tavor.dev>)
-- `TAVOR_CPU`: CPU to allocate to the sandbox (default: 1)
-- `TAVOR_MIB_RAM`: MiB RAM to allocate to the sandbox (default: 1024)
-- `TAVOR_BOX_TIMEOUT`: Default box timeout in seconds (default: 3600)
+- `DEVENTO_API_KEY`: Your API key (alternative to passing it in code)
+- `DEVENTO_BASE_URL`: API base URL (default: <https://api.devento.ai>)
+- `DEVENTO_CPU`: CPU to allocate to the sandbox (default: 1)
+- `DEVENTO_MIB_RAM`: MiB RAM to allocate to the sandbox (default: 1024)
+- `DEVENTO_BOX_TIMEOUT`: Default box timeout in seconds (default: 3600)
 
 Example:
 
 ```bash
-export TAVOR_API_KEY="sk-tavor-..."
-export TAVOR_BASE_URL="https://api.tavor.dev"
-export TAVOR_BOX_TIMEOUT="7200"
-export TAVOR_CPU="1"
-export TAVOR_MIB_RAM="1024"
+export DEVENTO_API_KEY="sk-devento-..."
+export DEVENTO_BASE_URL="https://api.devento.ai"
+export DEVENTO_BOX_TIMEOUT="7200"
+export DEVENTO_CPU="1"
+export DEVENTO_MIB_RAM="1024"
 
 # Now you can initialize without parameters
-python -c "from tavor import Tavor; client = Tavor()"
+python -c "from devento import Devento; client = Devento()"
 ```
 
 ## Requirements
@@ -277,8 +272,8 @@ python -c "from tavor import Tavor; client = Tavor()"
 
 ## Support
 
-- Documentation: <https://tavor.dev>
-- Issues: <https://github.com/tavor-dev/sdk-py/issues>
+- Documentation: <https://devento.ai>
+- Issues: <https://github.com/devento-ai/sdk-py/issues>
 
 ## License
 

@@ -1,32 +1,32 @@
 #!/usr/bin/env python3
 """
-Example usage of the Tavor SDK - Asynchronous version
+Example usage of the Devento SDK - Asynchronous version
 
-This demonstrates async usage patterns for the Tavor Python SDK.
-Replace 'your-api-key-here' with your actual Tavor API key.
+This demonstrates async usage patterns for the Devento Python SDK.
+Replace 'your-api-key-here' with your actual Devento API key.
 """
 
 import asyncio
-from tavor import AsyncTavor, BoxConfig, TavorError
+from devento import AsyncDevento, BoxConfig, DeventoError
 
 
 async def main():
     # Initialize the async client with your API key
-    async with AsyncTavor(api_key="your-api-key-here") as tavor:
-        print("🚀 Tavor SDK Example - Asynchronous")
+    async with AsyncDevento(api_key="your-api-key-here") as devento:
+        print("🚀 Devento SDK Example - Asynchronous")
         print("-" * 40)
 
         try:
             # Example 1: Simple async command execution
             print("1. Basic async command execution:")
-            async with tavor.box() as box:
-                result = await box.run("echo 'Hello from async Tavor!'")
+            async with devento.box() as box:
+                result = await box.run("echo 'Hello from async Devento!'")
                 print(f"   Output: {result.stdout.strip()}")
                 print(f"   Exit code: {result.exit_code}")
 
             # Example 2: Parallel execution
             print("\n2. Running commands in parallel:")
-            async with tavor.box() as box:
+            async with devento.box() as box:
                 # Run multiple commands concurrently
                 tasks = [
                     box.run("sleep 1 && echo 'Task 1 complete'"),
@@ -48,7 +48,7 @@ async def main():
                 metadata={"example": "async", "language": "python"},
             )
 
-            async with tavor.box(config=config) as box:
+            async with devento.box(config=config) as box:
                 # Install and use a package
                 print("   Installing requests...")
                 await box.run("pip install requests")
@@ -63,7 +63,7 @@ print(f'Version: {requests.__version__}')
 
             # Example 4: Async streaming output
             print("\n4. Async streaming output:")
-            async with tavor.box() as box:
+            async with devento.box() as box:
 
                 def print_stdout(line):
                     print(f"   [ASYNC] {line.rstrip()}")
@@ -77,7 +77,7 @@ print(f'Version: {requests.__version__}')
             print("\n5. Multiple sandboxes running concurrently:")
 
             async def run_task_in_sandbox(task_name, command):
-                async with tavor.box() as box:
+                async with devento.box() as box:
                     result = await box.run(command)
                     return f"{task_name}: {result.stdout.strip()}"
 
@@ -94,8 +94,8 @@ print(f'Version: {requests.__version__}')
 
             print("\n✅ All async examples completed successfully!")
 
-        except TavorError as e:
-            print(f"\n❌ Tavor SDK error: {e}")
+        except DeventoError as e:
+            print(f"\n❌ Devento SDK error: {e}")
         except Exception as e:
             print(f"\n❌ Unexpected error: {e}")
 

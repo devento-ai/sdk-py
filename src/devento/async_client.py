@@ -1,4 +1,4 @@
-"""Async Tavor SDK client implementation."""
+"""Async Devento SDK client implementation."""
 
 import asyncio
 import os
@@ -10,11 +10,11 @@ try:
     import aiohttp
 except ImportError:
     raise ImportError(
-        "aiohttp is required for AsyncTavor. Install it with: pip install tavor[async]"
+        "aiohttp is required for AsyncDevento. Install it with: pip install devento[async]"
     )
 
 from .exceptions import (
-    TavorError,
+    DeventoError,
     BoxNotFoundError,
     CommandTimeoutError,
     map_status_to_exception,
@@ -33,7 +33,7 @@ from .models import (
 class AsyncBoxHandle:
     """Async handle for interacting with a box."""
 
-    def __init__(self, client: "AsyncTavor", box_id: str, box: Optional[Box] = None):
+    def __init__(self, client: "AsyncDevento", box_id: str, box: Optional[Box] = None):
         self._client = client
         self.id = box_id
         self._box = box
@@ -49,7 +49,7 @@ class AsyncBoxHandle:
     async def refresh(self) -> "AsyncBoxHandle":
         """Refresh box status from the API."""
         if self._closed:
-            raise TavorError("Box handle is closed")
+            raise DeventoError("Box handle is closed")
 
         try:
             response = await self._client._request("GET", f"/api/v2/boxes/{self.id}")
@@ -83,7 +83,7 @@ class AsyncBoxHandle:
                 error_msg = f"Box failed to start: {self.status}"
                 if self._box and self._box.details:
                     error_msg += f" - {self._box.details}"
-                raise TavorError(error_msg)
+                raise DeventoError(error_msg)
 
             if timeout and (time.time() - start_time) > timeout:
                 raise CommandTimeoutError(
@@ -170,7 +170,7 @@ class AsyncBoxHandle:
             ValueError: If hostname is not available
         """
         if not self._box:
-            raise TavorError("Box information not available")
+            raise DeventoError("Box information not available")
         return self._box.get_public_url(port)
 
     async def expose_port(self, target_port: int) -> ExposedPort:
@@ -185,7 +185,7 @@ class AsyncBoxHandle:
             ExposedPort: Contains the proxy_port (external), target_port, and expires_at
 
         Raises:
-            TavorError: If the box is not in a running state or if no ports are available
+            DeventoError: If the box is not in a running state or if no ports are available
         """
         response = await self._client._request(
             "POST", f"/api/v2/boxes/{self.id}/expose_port", json={"port": target_port}
@@ -209,7 +209,7 @@ class AsyncBoxHandle:
         This temporarily stops the sandbox from running while preserving its state.
 
         Raises:
-            TavorError: If the box cannot be paused
+            DeventoError: If the box cannot be paused
         """
         await self._client._request("POST", f"/api/v2/boxes/{self.id}/pause")
         await self.refresh()
@@ -220,7 +220,7 @@ class AsyncBoxHandle:
         This continues the sandbox execution from where it was paused.
 
         Raises:
-            TavorError: If the box cannot be resumed
+            DeventoError: If the box cannot be resumed
         """
         await self._client._request("POST", f"/api/v2/boxes/{self.id}/resume")
         await self.refresh()
@@ -234,8 +234,8 @@ class AsyncBoxHandle:
         await self.stop()
 
 
-class AsyncTavor:
-    """Async Tavor client for interacting with boxes."""
+class AsyncDevento:
+    """Async Devento client for interacting with boxes."""
 
     def __init__(
         self,
@@ -244,24 +244,24 @@ class AsyncTavor:
         timeout: int = 30,
         session: Optional[aiohttp.ClientSession] = None,
     ):
-        """Initialize AsyncTavor client.
+        """Initialize AsyncDevento client.
 
         Args:
-            api_key: Your Tavor API key (sk-tavor-...). Defaults to TAVOR_API_KEY env var.
-            base_url: Base URL for Tavor API. Defaults to TAVOR_BASE_URL env var or https://api.tavor.dev.
+            api_key: Your Devento API key (sk-devento-...). Defaults to DEVENTO_API_KEY env var.
+            base_url: Base URL for Devento API. Defaults to DEVENTO_BASE_URL env var or https://api.devento.ai.
             timeout: Default timeout for HTTP requests
             session: Optional aiohttp session to use
         """
         if api_key is None:
-            api_key = os.environ.get("TAVOR_API_KEY")
+            api_key = os.environ.get("DEVENTO_API_KEY")
 
         if not api_key:
             raise ValueError(
-                "API key is required. Set TAVOR_API_KEY environment variable or pass api_key parameter."
+                "API key is required. Set DEVENTO_API_KEY environment variable or pass api_key parameter."
             )
 
         if base_url is None:
-            base_url = os.environ.get("TAVOR_BASE_URL", "https://api.tavor.dev")
+            base_url = os.environ.get("DEVENTO_BASE_URL", "https://api.devento.ai")
 
         self.api_key = api_key
         self.base_url = base_url.rstrip("/")
@@ -270,7 +270,7 @@ class AsyncTavor:
         self._owns_session = session is None
         self._headers = {"X-API-Key": api_key, "Content-Type": "application/json"}
 
-    async def __aenter__(self) -> "AsyncTavor":
+    async def __aenter__(self) -> "AsyncDevento":
         """Enter async context manager."""
         if self._owns_session:
             self._session = aiohttp.ClientSession(
@@ -374,7 +374,7 @@ class AsyncTavor:
             AsyncBoxHandle: Handle for interacting with the box
 
         Example:
-            async with tavor.box() as box:
+            async with devento.box() as box:
                 result = await box.run("echo 'Hello, World!'")
                 print(result.stdout)
         """

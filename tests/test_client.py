@@ -1,46 +1,46 @@
-"""Tests for Tavor client."""
+"""Tests for Devento client."""
 
 import pytest
 from unittest.mock import Mock, patch
 
-from tavor import Tavor, BoxConfig, AuthenticationError
+from devento import Devento, BoxConfig, AuthenticationError
 
 
-class TestTavorClient:
-    """Test Tavor client functionality."""
+class TestDeventoClient:
+    """Test Devento client functionality."""
 
     def test_init_requires_api_key(self, monkeypatch):
         """Test that API key is required."""
         # Clear any environment variable
-        monkeypatch.delenv("TAVOR_API_KEY", raising=False)
+        monkeypatch.delenv("DEVENTO_API_KEY", raising=False)
         with pytest.raises(ValueError, match="API key is required"):
-            Tavor()
+            Devento()
 
     def test_init_with_api_key(self):
         """Test client initialization with API key."""
-        client = Tavor(api_key="sk-tavor-test")
-        assert client.api_key == "sk-tavor-test"
-        assert client.base_url == "https://api.tavor.dev"
+        client = Devento(api_key="sk-devento-test")
+        assert client.api_key == "sk-devento-test"
+        assert client.base_url == "https://api.devento.ai"
         assert client.timeout == 30
 
     def test_init_with_custom_base_url(self):
         """Test client initialization with custom base URL."""
-        client = Tavor(api_key="sk-tavor-test", base_url="http://localhost:4000/")
+        client = Devento(api_key="sk-devento-test", base_url="http://localhost:4000/")
         assert client.base_url == "http://localhost:4000"
 
-    @patch("tavor.client.requests.Session")
+    @patch("devento.client.requests.Session")
     def test_headers_are_set(self, mock_session_class):
         """Test that headers are properly set."""
         mock_session = Mock()
         mock_session_class.return_value = mock_session
 
-        Tavor(api_key="sk-tavor-test")
+        Devento(api_key="sk-devento-test")
 
         mock_session.headers.update.assert_called_with(
-            {"X-API-Key": "sk-tavor-test", "Content-Type": "application/json"}
+            {"X-API-Key": "sk-devento-test", "Content-Type": "application/json"}
         )
 
-    @patch("tavor.client.requests.Session")
+    @patch("devento.client.requests.Session")
     def test_request_error_handling(self, mock_session_class):
         """Test API error handling."""
         mock_session = Mock()
@@ -53,7 +53,7 @@ class TestTavorClient:
         mock_response.headers = {"content-type": "application/json"}
         mock_session.request.return_value = mock_response
 
-        client = Tavor(api_key="sk-tavor-invalid")
+        client = Devento(api_key="sk-devento-invalid")
 
         with pytest.raises(AuthenticationError) as exc_info:
             client._request("GET", "/api/v2/boxes")
@@ -61,7 +61,7 @@ class TestTavorClient:
         assert exc_info.value.status_code == 401
         assert "Invalid API key" in str(exc_info.value)
 
-    @patch("tavor.client.requests.Session")
+    @patch("devento.client.requests.Session")
     def test_list_boxes(self, mock_session_class):
         """Test listing boxes."""
         mock_session = Mock()
@@ -78,22 +78,22 @@ class TestTavorClient:
                     "timeout": 3600,
                     "created_at": "2024-01-01T00:00:00Z",
                     "details": None,
-                    "hostname": "box789.tavor.app",
+                    "hostname": "box789.deven.to",
                 }
             ]
         }
         mock_session.request.return_value = mock_response
 
-        client = Tavor(api_key="sk-tavor-test")
+        client = Devento(api_key="sk-devento-test")
         boxes = client.list_boxes()
 
         assert len(boxes) == 1
         assert boxes[0].id == "box-123"
         assert boxes[0].status.value == "running"
         assert boxes[0].timeout == 3600
-        assert boxes[0].hostname == "box789.tavor.app"
+        assert boxes[0].hostname == "box789.deven.to"
 
-    @patch("tavor.client.requests.Session")
+    @patch("devento.client.requests.Session")
     def test_box_context_manager(self, mock_session_class):
         """Test box context manager."""
         mock_session = Mock()
@@ -117,7 +117,7 @@ class TestTavorClient:
                 "status": "running",
                 "timeout": 3600,
                 "created_at": "2024-01-01T00:00:00Z",
-                "hostname": "box-456.tavor.app",
+                "hostname": "box-456.deven.to",
             }
         }
 
@@ -128,7 +128,7 @@ class TestTavorClient:
             delete_response,  # Delete box
         ]
 
-        client = Tavor(api_key="sk-tavor-test")
+        client = Devento(api_key="sk-devento-test")
 
         with client.box() as box:
             assert box.id == "box-456"
@@ -168,7 +168,7 @@ class TestTavorClient:
         assert config.timeout == 1200
         assert config.metadata == {"env": "test"}
 
-    @patch("tavor.client.requests.Session")
+    @patch("devento.client.requests.Session")
     def test_box_handle_get_public_url(self, mock_session_class):
         """Test BoxHandle.get_public_url method."""
         mock_session = Mock()
@@ -190,7 +190,7 @@ class TestTavorClient:
                 "status": "running",
                 "timeout": 3600,
                 "created_at": "2024-01-01T00:00:00Z",
-                "hostname": "box888.tavor.app",
+                "hostname": "box888.deven.to",
             }
         }
 
@@ -206,20 +206,20 @@ class TestTavorClient:
             delete_response,
         ]
 
-        client = Tavor(api_key="sk-tavor-test")
+        client = Devento(api_key="sk-devento-test")
 
         with client.box() as box:
             box.refresh()  # This triggers the list call
 
             # Test get_public_url
             url = box.get_public_url(8080)
-            assert url == "https://8080-box888.tavor.app"
+            assert url == "https://8080-box888.deven.to"
 
             # Test with different port
             url = box.get_public_url(3000)
-            assert url == "https://3000-box888.tavor.app"
+            assert url == "https://3000-box888.deven.to"
 
-    @patch("tavor.client.requests.Session")
+    @patch("devento.client.requests.Session")
     def test_box_pause_resume(self, mock_session_class):
         """Test box pause and resume functionality."""
         mock_session = Mock()
@@ -240,7 +240,7 @@ class TestTavorClient:
                 "timeout": 3600,
                 "created_at": "2024-01-01T00:00:00Z",
                 "details": None,
-                "hostname": "box-pause.tavor.app",
+                "hostname": "box-pause.deven.to",
             }
         }
 
@@ -254,7 +254,7 @@ class TestTavorClient:
                 "timeout": 3600,
                 "created_at": "2024-01-01T00:00:00Z",
                 "details": None,
-                "hostname": "box-pause.tavor.app",
+                "hostname": "box-pause.deven.to",
             }
         }
 
@@ -281,7 +281,7 @@ class TestTavorClient:
             delete_response,
         ]
 
-        client = Tavor(api_key="sk-tavor-test")
+        client = Devento(api_key="sk-devento-test")
 
         with client.box() as box:
             # Test pause

@@ -7,9 +7,9 @@ PIP := $(PYTHON) -m pip
 VENV := venv
 VENV_ACTIVATE := source $(VENV)/bin/activate
 
-PACKAGE_NAME := tavor
-VERSION_FILE := src/tavor/__version__.py
-CURRENT_VERSION := $(shell grep -oE '[0-9]+\.[0-9]+\.[0-9]+' src/tavor/__init__.py | head -1)
+PACKAGE_NAME := devento
+VERSION_FILE := src/devento/__version__.py
+CURRENT_VERSION := $(shell grep -oE '[0-9]+\.[0-9]+\.[0-9]+' src/devento/__init__.py | head -1)
 
 BLUE := \033[0;34m
 GREEN := \033[0;32m
@@ -18,7 +18,7 @@ RED := \033[0;31m
 NC := \033[0m # No Color
 
 help: ## Show this help message
-	@echo -e "${BLUE}Tavor Python SDK - Available Commands${NC}"
+	@echo -e "${BLUE}Devento Python SDK - Available Commands${NC}"
 	@echo -e "${BLUE}=====================================${NC}"
 	@awk 'BEGIN {FS = ":.*##"; printf "\n"} /^[a-zA-Z_-]+:.*?##/ { printf "  ${GREEN}%-15s${NC} %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
 	@echo ""
@@ -63,18 +63,18 @@ test: ## Run tests
 
 test-coverage: ## Run tests with coverage report
 	@echo -e "${BLUE}Running tests with coverage...${NC}"
-	pytest tests/ -v --cov=src/tavor --cov-report=html --cov-report=term
+	pytest tests/ -v --cov=src/devento --cov-report=html --cov-report=term
 	@echo -e "${GREEN}Coverage report generated in htmlcov/index.html${NC}"
 
 check-version: ## Check current version
 	@echo -e "${BLUE}Current version: ${GREEN}$(CURRENT_VERSION)${NC}"
 	@echo -e "${BLUE}Checking version consistency...${NC}"
-	@if grep -q "__version__ = \"$(CURRENT_VERSION)\"" src/tavor/__init__.py && \
+	@if grep -q "__version__ = \"$(CURRENT_VERSION)\"" src/devento/__init__.py && \
 	    grep -q "version = \"$(CURRENT_VERSION)\"" pyproject.toml; then \
 		echo -e "${GREEN}✓ Version is consistent across files${NC}"; \
 	else \
 		echo -e "${RED}✗ Version mismatch detected!${NC}"; \
-		echo "  __init__.py: $$(grep -oE '[0-9]+\.[0-9]+\.[0-9]+' src/tavor/__init__.py | head -1)"; \
+		echo "  __init__.py: $$(grep -oE '[0-9]+\.[0-9]+\.[0-9]+' src/devento/__init__.py | head -1)"; \
 		echo "  pyproject.toml: $$(grep -oE 'version = "[0-9]+\.[0-9]+\.[0-9]+"' pyproject.toml | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')"; \
 		exit 1; \
 	fi
@@ -92,7 +92,7 @@ _bump:
 	@echo -e "${BLUE}Bumping $(TYPE) version from $(CURRENT_VERSION)...${NC}"
 	@NEW_VERSION=$$(python -c "v='$(CURRENT_VERSION)'.split('.'); major,minor,patch=int(v[0]),int(v[1]),int(v[2]); major,minor,patch=(major+1,0,0) if '$(TYPE)'=='major' else (major,minor+1,0) if '$(TYPE)'=='minor' else (major,minor,patch+1); print('{}.{}.{}'.format(major,minor,patch))"); \
 	echo -e "${BLUE}New version: ${GREEN}$$NEW_VERSION${NC}"; \
-	sed -i '' "s/__version__ = \"$(CURRENT_VERSION)\"/__version__ = \"$$NEW_VERSION\"/" src/tavor/__init__.py; \
+	sed -i '' "s/__version__ = \"$(CURRENT_VERSION)\"/__version__ = \"$$NEW_VERSION\"/" src/devento/__init__.py; \
 	sed -i '' "s/version = \"$(CURRENT_VERSION)\"/version = \"$$NEW_VERSION\"/" pyproject.toml; \
 	echo -e "${GREEN}✓ Version bumped to $$NEW_VERSION${NC}"
 
