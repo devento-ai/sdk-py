@@ -99,7 +99,10 @@ class BoxHandle:
         if use_streaming:
             return self._run_with_streaming(command, options)
         else:
-            cmd_response = self._client._queue_command(self.id, command, stream=False)
+            timeout_ms = int(options.timeout * 1000) if options.timeout else None
+            cmd_response = self._client._queue_command(
+                self.id, command, stream=False, timeout_ms=timeout_ms
+            )
             command_id = cmd_response["id"]
 
             start_time = time.time()
@@ -128,6 +131,11 @@ class BoxHandle:
                     )
 
                 if options.timeout and (time.time() - start_time) > options.timeout:
+                    try:
+                        self._cancel_command(command_id, "timeout")
+                    except Exception:
+                        # Ignore cancellation errors
+                        pass
                     raise CommandTimeoutError(
                         f"Command timed out after {options.timeout} seconds"
                     )
@@ -151,10 +159,15 @@ class BoxHandle:
         status = CommandStatus.QUEUED
         command_id = None
 
+        timeout_ms = int(options.timeout * 1000) if options.timeout else None
+        payload = {"command": command, "stream": True}
+        if timeout_ms is not None:
+            payload["timeout_ms"] = timeout_ms
+
         response = self._client.session.post(
             url,
             headers=headers,
-            json={"command": command, "stream": True},
+            json=payload,
             stream=True,
             timeout=None,  # Disable timeout for streaming
         )
@@ -247,6 +260,12 @@ class BoxHandle:
                             pass
 
                     if options.timeout and (time.time() - start_time) > options.timeout:
+                        if command_id:
+                            try:
+                                self._cancel_command(command_id, "timeout")
+                            except Exception:
+                                # Ignore cancellation errors
+                                pass
                         raise CommandTimeoutError(
                             f"Command timed out after {options.timeout} seconds"
                         )
@@ -349,6 +368,22 @@ class BoxHandle:
         """Exit context manager and clean up."""
         self.stop()
 
+    def _cancel_command(self, command_id: str, reason: Optional[str] = None) -> None:
+        """Cancel a running command.
+
+        Args:
+            command_id: The ID of the command to cancel
+            reason: Optional reason for cancelling
+        """
+        payload = {}
+        if reason:
+            payload["reason"] = reason
+        self._client._request(
+            "POST",
+            f"/api/v2/boxes/{self.id}/commands/{command_id}/cancel",
+            json=payload,
+        )
+
 
 class Devento:
     """Main Devento client for interacting with boxes."""
@@ -437,12 +472,18 @@ class Devento:
         self._request("DELETE", f"/api/v2/boxes/{box_id}")
 
     def _queue_command(
-        self, box_id: str, command: str, stream: bool = False
+        self,
+        box_id: str,
+        command: str,
+        stream: bool = False,
+        timeout_ms: Optional[int] = None,
     ) -> Dict[str, Any]:
         """Queue a command on a box."""
         payload = {"command": command, "stream": False}
         if stream:
             payload["stream"] = True
+        if timeout_ms is not None:
+            payload["timeout_ms"] = timeout_ms
         response = self._request("POST", f"/api/v2/boxes/{box_id}", json=payload)
         return response.json()
 

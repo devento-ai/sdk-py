@@ -12,7 +12,7 @@ Basic usage:
         print(result.stdout)
 """
 
-__version__ = "0.1.2"
+__version__ = "0.1.3"
 
 from .client import Devento, BoxHandle
 from .models import (
