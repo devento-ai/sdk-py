@@ -159,6 +159,58 @@ The `expose_port` method returns an `ExposedPort` object with:
 - `proxy_port` - The external port assigned by the system
 - `expires_at` - When this port mapping will expire
 
+### Snapshots
+
+Snapshots allow you to save the state of a sandbox and restore it later. This is useful for creating checkpoints, backing up configurations, or reverting changes:
+
+```python
+from devento import Devento
+
+devento = Devento()
+
+with devento.box() as box:
+    box.wait_until_ready()
+    
+    # Create a snapshot before making changes
+    snapshot = box.create_snapshot(label="clean-state")
+    box.wait_snapshot_ready(snapshot.id)
+    
+    # Make some changes
+    box.run("apt-get update && apt-get -y install nginx")
+    box.run("echo 'Hello World' > /var/www/html/index.html")
+    
+    # List all snapshots
+    snapshots = box.list_snapshots()
+    for s in snapshots:
+        print(f"Snapshot {s.id}: {s.label} - {s.status}")
+    
+    # Restore to the previous state
+    box.restore_snapshot(snapshot.id)
+    box.wait_until_ready()  # Wait for box to be running again after restore
+    
+    # The changes are gone - nginx is not installed anymore
+    result = box.run("which nginx", on_stderr=lambda _: None)
+    print("nginx found" if result.exit_code == 0 else "nginx not found")
+```
+
+Available snapshot methods:
+
+- `list_snapshots()` - List all snapshots for the box
+- `get_snapshot(snapshot_id)` - Get details of a specific snapshot
+- `create_snapshot(label=None, description=None)` - Create a new snapshot
+- `restore_snapshot(snapshot_id)` - Restore the box from a snapshot
+- `delete_snapshot(snapshot_id)` - Delete a snapshot
+- `wait_snapshot_ready(snapshot_id, timeout=300, poll_interval=1.0)` - Wait for a snapshot to be ready
+
+Snapshot states:
+- `CREATING` - Snapshot is being created
+- `READY` - Snapshot is ready to use
+- `RESTORING` - Snapshot is being restored
+- `DELETED` - Snapshot has been deleted
+- `ERROR` - Snapshot creation failed
+
+Note: Snapshots can only be created when the box is in `RUNNING` or `PAUSED` state.
+
 ### Async Operations
 
 ```python

@@ -27,6 +27,8 @@ from .models import (
     CommandStatus,
     CommandOptions,
     ExposedPort,
+    Snapshot,
+    SnapshotStatus,
 )
 
 
@@ -224,6 +226,138 @@ class AsyncBoxHandle:
         """
         await self._client._request("POST", f"/api/v2/boxes/{self.id}/resume")
         await self.refresh()
+
+    async def list_snapshots(self) -> List[Snapshot]:
+        """List all snapshots for this box.
+
+        Returns:
+            List of snapshots
+
+        Raises:
+            DeventoError: If the request fails
+        """
+        r = await self._client._request("GET", f"/api/v2/boxes/{self.id}/snapshots")
+        data = r["data"]
+        return [Snapshot(**{**s, "status": SnapshotStatus(s["status"])}) for s in data]
+
+    async def get_snapshot(self, snapshot_id: str) -> Snapshot:
+        """Get a specific snapshot by ID.
+
+        Args:
+            snapshot_id: The ID of the snapshot to fetch
+
+        Returns:
+            The snapshot details
+
+        Raises:
+            DeventoError: If the snapshot is not found
+        """
+        r = await self._client._request(
+            "GET", f"/api/v2/boxes/{self.id}/snapshots/{snapshot_id}"
+        )
+        s = r["data"]
+        return Snapshot(**{**s, "status": SnapshotStatus(s["status"])})
+
+    async def create_snapshot(
+        self, label: Optional[str] = None, description: Optional[str] = None
+    ) -> Snapshot:
+        """Create a new snapshot of the box.
+
+        The box must be in a running or paused state.
+
+        Args:
+            label: Optional label for the snapshot
+            description: Optional description for the snapshot
+
+        Returns:
+            The created snapshot
+
+        Raises:
+            DeventoError: If the box is not in a valid state for snapshotting
+        """
+        payload = {}
+        if label is not None:
+            payload["label"] = label
+        if description is not None:
+            payload["description"] = description
+        r = await self._client._request(
+            "POST", f"/api/v2/boxes/{self.id}/snapshots", json=payload
+        )
+        s = r["data"]
+        return Snapshot(**{**s, "status": SnapshotStatus(s["status"])})
+
+    async def restore_snapshot(self, snapshot_id: str) -> Snapshot:
+        """Restore the box from a snapshot.
+
+        The restore operation happens asynchronously.
+
+        Args:
+            snapshot_id: The ID of the snapshot to restore
+
+        Returns:
+            The snapshot with status "restoring"
+
+        Raises:
+            DeventoError: If the snapshot cannot be restored
+        """
+        r = await self._client._request(
+            "POST",
+            f"/api/v2/boxes/{self.id}/restore",
+            json={"snapshot_id": snapshot_id},
+        )
+        s = r["data"]
+        return Snapshot(**{**s, "status": SnapshotStatus(s["status"])})
+
+    async def delete_snapshot(self, snapshot_id: str) -> Snapshot:
+        """Delete a snapshot.
+
+        Cannot delete snapshots that are currently being created or restored.
+
+        Args:
+            snapshot_id: The ID of the snapshot to delete
+
+        Returns:
+            The deleted snapshot
+
+        Raises:
+            DeventoError: If the snapshot cannot be deleted
+        """
+        r = await self._client._request(
+            "DELETE", f"/api/v2/boxes/{self.id}/snapshots/{snapshot_id}"
+        )
+        s = r["data"]
+        return Snapshot(**{**s, "status": SnapshotStatus(s["status"])})
+
+    async def wait_snapshot_ready(
+        self, snapshot_id: str, timeout: float = 300, poll_interval: float = 1.0
+    ) -> None:
+        """Wait for a snapshot to become ready.
+
+        Polls the snapshot status until it's ready or fails.
+
+        Args:
+            snapshot_id: The ID of the snapshot to wait for
+            timeout: Maximum time to wait in seconds (default: 5 minutes)
+            poll_interval: Polling interval in seconds (default: 1 second)
+
+        Raises:
+            DeventoError: If the snapshot fails
+            CommandTimeoutError: If the snapshot doesn't become ready within the timeout
+        """
+        t0 = time.time()
+        while True:
+            s = await self.get_snapshot(snapshot_id)
+            if s.status == SnapshotStatus.READY:
+                return
+            if s.status in (SnapshotStatus.ERROR, SnapshotStatus.DELETED):
+                raise DeventoError(
+                    f"Snapshot {snapshot_id} ended with status: {s.status.value}"
+                )
+            if time.time() - t0 > timeout:
+                raise CommandTimeoutError(
+                    f"Snapshot {snapshot_id} did not become ready within {timeout}s"
+                )
+            await asyncio.sleep(poll_interval)
 
     async def __aenter__(self) -> "AsyncBoxHandle":
         """Enter async context manager."""

@@ -182,3 +182,29 @@ class ExposedPort:
     proxy_port: int
     target_port: int
     expires_at: datetime
+
+
+class SnapshotStatus(str, Enum):
+    """Snapshot status enum."""
+
+    CREATING = "creating"
+    READY = "ready"
+    RESTORING = "restoring"
+    DELETED = "deleted"
+    ERROR = "error"
+
+
+@dataclass
+class Snapshot:
+    """Represents a snapshot."""
+
+    id: str
+    box_id: str
+    snapshot_type: str
+    status: SnapshotStatus
+    label: Optional[str] = None
+    size_bytes: Optional[int] = None
+    checksum_sha256: Optional[str] = None
+    created_at: Optional[datetime] = None
+    orchestrator_id: Optional[str] = None
+    description: Optional[str] = None

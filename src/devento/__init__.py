@@ -12,7 +12,7 @@ Basic usage:
         print(result.stdout)
 """
 
-__version__ = "0.1.3"
+__version__ = "0.1.4"
 
 from .client import Devento, BoxHandle
 from .models import (
@@ -23,6 +23,8 @@ from .models import (
     CommandStatus,
     CommandOptions,
     ExposedPort,
+    Snapshot,
+    SnapshotStatus,
 )
 from .exceptions import (
     DeventoError,
@@ -58,6 +60,8 @@ __all__ = [
     "CommandStatus",
     "CommandOptions",
     "ExposedPort",
+    "Snapshot",
+    "SnapshotStatus",
     # Exceptions
     "DeventoError",
     "APIError",
