@@ -10,6 +10,12 @@ from devento import (
     CommandResult,
     CommandStatus,
     CommandOptions,
+    Domain,
+    DomainKind,
+    DomainStatus,
+    DomainMeta,
+    DomainResponse,
+    DomainsResponse,
 )
 
 
@@ -173,3 +179,60 @@ class TestModels:
         assert options.on_stdout is None
         assert options.on_stderr is None
         assert options.poll_interval == 1.0
+
+    def test_domain_enums(self):
+        """Test domain enum values."""
+        assert DomainKind.MANAGED.value == "managed"
+        assert DomainKind.CUSTOM.value == "custom"
+        assert DomainStatus.PENDING_DNS.value == "pending_dns"
+        assert DomainStatus.PENDING_SSL.value == "pending_ssl"
+        assert DomainStatus.ACTIVE.value == "active"
+        assert DomainStatus.FAILED.value == "failed"
+        assert DomainStatus.DISABLED.value == "disabled"
+
+    def test_domain_dataclass(self):
+        """Test Domain dataclass construction."""
+        domain = Domain(
+            id="dom_123",
+            hostname="app.deven.to",
+            slug="app",
+            kind=DomainKind.MANAGED,
+            status=DomainStatus.ACTIVE,
+            target_port=443,
+            box_id="box_123",
+            cloudflare_id=None,
+            verification_payload={"cname": "edge.deven.to"},
+            verification_errors={},
+            inserted_at="2024-01-01T00:00:00Z",
+            updated_at="2024-01-01T12:00:00Z",
+        )
+
+        assert domain.kind is DomainKind.MANAGED
+        assert domain.status is DomainStatus.ACTIVE
+        assert domain.hostname == "app.deven.to"
+        assert domain.verification_payload == {"cname": "edge.deven.to"}
+
+    def test_domain_response_wrappers(self):
+        """Test domain response dataclasses."""
+        domain = Domain(
+            id="dom_123",
+            hostname="app.deven.to",
+            slug="app",
+            kind=DomainKind.MANAGED,
+            status=DomainStatus.ACTIVE,
+            target_port=80,
+            box_id="box_123",
+            cloudflare_id="cf_123",
+            verification_payload=None,
+            verification_errors=None,
+            inserted_at="2024-01-01T00:00:00Z",
+            updated_at="2024-01-01T00:30:00Z",
+        )
+        meta = DomainMeta(managed_suffix="deven.to", cname_target="edge.deven.to")
+
+        domains_response = DomainsResponse(data=[domain], meta=meta)
+        domain_response = DomainResponse(data=domain, meta=meta)
+
+        assert domains_response.data[0].id == "dom_123"
+        assert domains_response.meta.cname_target == "edge.deven.to"
+        assert domain_response.data.hostname == "app.deven.to"

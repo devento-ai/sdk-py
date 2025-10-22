@@ -3,7 +3,13 @@
 import pytest
 from unittest.mock import Mock, patch
 
-from devento import Devento, BoxConfig, AuthenticationError
+from devento import (
+    Devento,
+    BoxConfig,
+    AuthenticationError,
+    DomainKind,
+    DomainStatus,
+)
 
 
 class TestDeventoClient:
@@ -146,6 +152,155 @@ class TestDeventoClient:
         delete_call = mock_session.request.call_args_list[2]
         assert delete_call[0][0] == "DELETE"
         assert "/api/v2/boxes/box-456" in delete_call[0][1]
+
+    @patch("devento.client.requests.Session")
+    def test_list_domains(self, mock_session_class):
+        """Test listing domains returns typed response."""
+        mock_session = Mock()
+        mock_session_class.return_value = mock_session
+
+        domain_payload = {
+            "data": [
+                {
+                    "id": "dom_123",
+                    "hostname": "app.deven.to",
+                    "slug": "app",
+                    "kind": "managed",
+                    "status": "active",
+                    "target_port": 4000,
+                    "box_id": "box_123",
+                    "cloudflare_id": None,
+                    "verification_payload": {},
+                    "verification_errors": {},
+                    "inserted_at": "2024-01-01T00:00:00Z",
+                    "updated_at": "2024-01-02T00:00:00Z",
+                }
+            ],
+            "meta": {"managed_suffix": "deven.to", "cname_target": "edge.deven.to"},
+        }
+
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = domain_payload
+        mock_response.headers = {"content-type": "application/json"}
+        mock_session.request.return_value = mock_response
+
+        client = Devento(api_key="sk-devento-test")
+        result = client.list_domains()
+
+        assert result.meta.managed_suffix == "deven.to"
+        assert result.data[0].kind == DomainKind.MANAGED
+        assert result.data[0].status == DomainStatus.ACTIVE
+
+        mock_session.request.assert_called_with(
+            "GET", "https://api.devento.ai/api/v2/domains", timeout=30
+        )
+
+    @patch("devento.client.requests.Session")
+    def test_create_domain_omits_none_fields(self, mock_session_class):
+        """Test creating managed domain omits optional None fields."""
+        mock_session = Mock()
+        mock_session_class.return_value = mock_session
+
+        domain_payload = {
+            "data": {
+                "id": "dom_123",
+                "hostname": "app.deven.to",
+                "slug": "app",
+                "kind": "managed",
+                "status": "active",
+                "target_port": 4000,
+                "box_id": "box_123",
+                "cloudflare_id": None,
+                "verification_payload": {},
+                "verification_errors": {},
+                "inserted_at": "2024-01-01T00:00:00Z",
+                "updated_at": "2024-01-02T00:00:00Z",
+            },
+            "meta": {"managed_suffix": "deven.to", "cname_target": "edge.deven.to"},
+        }
+
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = domain_payload
+        mock_response.headers = {"content-type": "application/json"}
+        mock_session.request.return_value = mock_response
+
+        client = Devento(api_key="sk-devento-test")
+        client.create_domain(
+            kind=DomainKind.MANAGED,
+            slug="app",
+            hostname=None,
+            target_port=4000,
+            box_id="box_123",
+        )
+
+        args, kwargs = mock_session.request.call_args
+        assert args[0] == "POST"
+        assert args[1] == "https://api.devento.ai/api/v2/domains"
+        assert kwargs["json"]["kind"] == "managed"
+        assert "hostname" not in kwargs["json"]
+
+    @patch("devento.client.requests.Session")
+    def test_update_domain_allows_nulls(self, mock_session_class):
+        """Test updating domain allows explicit null values."""
+        mock_session = Mock()
+        mock_session_class.return_value = mock_session
+
+        domain_payload = {
+            "data": {
+                "id": "dom_123",
+                "hostname": "app.deven.to",
+                "slug": "app",
+                "kind": "managed",
+                "status": "active",
+                "target_port": None,
+                "box_id": None,
+                "cloudflare_id": None,
+                "verification_payload": {},
+                "verification_errors": {},
+                "inserted_at": "2024-01-01T00:00:00Z",
+                "updated_at": "2024-01-02T00:00:00Z",
+            },
+            "meta": {"managed_suffix": "deven.to", "cname_target": "edge.deven.to"},
+        }
+
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = domain_payload
+        mock_response.headers = {"content-type": "application/json"}
+        mock_session.request.return_value = mock_response
+
+        client = Devento(api_key="sk-devento-test")
+        client.update_domain(
+            "dom_123",
+            target_port=None,
+            box_id=None,
+            status=DomainStatus.PENDING_DNS,
+        )
+
+        _, kwargs = mock_session.request.call_args
+        assert kwargs["json"]["target_port"] is None
+        assert kwargs["json"]["box_id"] is None
+        assert kwargs["json"]["status"] == "pending_dns"
+
+    @patch("devento.client.requests.Session")
+    def test_delete_domain(self, mock_session_class):
+        """Test deleting domain issues DELETE request."""
+        mock_session = Mock()
+        mock_session_class.return_value = mock_session
+
+        mock_response = Mock()
+        mock_response.status_code = 204
+        mock_response.headers = {}
+        mock_session.request.return_value = mock_response
+
+        client = Devento(api_key="sk-devento-test")
+        client.delete_domain("dom_123")
+
+        mock_session.request.assert_called_with(
+            "DELETE", "https://api.devento.ai/api/v2/domains/dom_123", timeout=30
+        )
 
     def test_box_config_validation(self):
         """Test BoxConfig validation."""

@@ -4,7 +4,7 @@ import asyncio
 import os
 import time
 from contextlib import asynccontextmanager
-from typing import Optional, List, Dict, Any, AsyncGenerator
+from typing import Optional, List, Dict, Any, AsyncGenerator, Union
 
 try:
     import aiohttp
@@ -26,10 +26,19 @@ from .models import (
     CommandResult,
     CommandStatus,
     CommandOptions,
+    Domain,
+    DomainKind,
+    DomainStatus,
+    DomainResponse,
+    DomainsResponse,
+    DomainMeta,
     ExposedPort,
     Snapshot,
     SnapshotStatus,
 )
+
+
+_UNSET = object()
 
 
 class AsyncBoxHandle:
@@ -476,6 +485,82 @@ class AsyncDevento:
             "GET", f"/api/v2/boxes/{box_id}/commands/{command_id}"
         )
 
+    async def list_domains(self) -> DomainsResponse:
+        """List managed and custom domains."""
+        data = await self._request("GET", "/api/v2/domains")
+        return self._build_domains_response(data)
+
+    async def get_domain(self, domain_id: str) -> DomainResponse:
+        """Retrieve a single domain by its identifier."""
+        data = await self._request("GET", f"/api/v2/domains/{domain_id}")
+        return self._build_domain_response(data)
+
+    async def create_domain(
+        self,
+        *,
+        kind: Union[DomainKind, str],
+        slug: Optional[str] = None,
+        hostname: Optional[str] = None,
+        status: Optional[Union[DomainStatus, str]] = None,
+        target_port: Optional[int] = None,
+        box_id: Optional[str] = None,
+    ) -> DomainResponse:
+        """Create a managed or custom domain."""
+        payload: Dict[str, Any] = {
+            "kind": kind.value if isinstance(kind, DomainKind) else str(kind),
+        }
+
+        if slug is not None:
+            payload["slug"] = slug
+        if hostname is not None:
+            payload["hostname"] = hostname
+        if status is not None:
+            payload["status"] = (
+                status.value if isinstance(status, DomainStatus) else str(status)
+            )
+        if target_port is not None:
+            payload["target_port"] = target_port
+        if box_id is not None:
+            payload["box_id"] = box_id
+
+        data = await self._request("POST", "/api/v2/domains", json=payload)
+        return self._build_domain_response(data)
+
+    async def update_domain(
+        self,
+        domain_id: str,
+        *,
+        slug: Union[str, None, object] = _UNSET,
+        hostname: Union[str, None, object] = _UNSET,
+        status: Union[DomainStatus, str, object] = _UNSET,
+        target_port: Union[int, None, object] = _UNSET,
+        box_id: Union[str, None, object] = _UNSET,
+    ) -> DomainResponse:
+        """Update domain routing or metadata."""
+        payload: Dict[str, Any] = {}
+
+        if slug is not _UNSET:
+            payload["slug"] = slug
+        if hostname is not _UNSET:
+            payload["hostname"] = hostname
+        if status is not _UNSET:
+            payload["status"] = (
+                status.value if isinstance(status, DomainStatus) else status
+            )
+        if target_port is not _UNSET:
+            payload["target_port"] = target_port
+        if box_id is not _UNSET:
+            payload["box_id"] = box_id
+
+        data = await self._request(
+            "PATCH", f"/api/v2/domains/{domain_id}", json=payload
+        )
+        return self._build_domain_response(data)
+
+    async def delete_domain(self, domain_id: str) -> None:
+        """Delete a domain."""
+        await self._request("DELETE", f"/api/v2/domains/{domain_id}")
+
     async def list_boxes(self) -> List[Box]:
         """List all boxes for the current organization."""
         data = await self._request("GET", "/api/v2/boxes")
@@ -522,6 +607,51 @@ class AsyncDevento:
             yield box_handle
         finally:
             await box_handle.stop()
+
+    def _build_domain(self, data: Dict[str, Any]) -> Domain:
+        """Convert API domain payload into Domain model."""
+        return Domain(
+            id=data["id"],
+            hostname=data["hostname"],
+            slug=data.get("slug"),
+            kind=data["kind"]
+            if isinstance(data.get("kind"), DomainKind)
+            else DomainKind(data["kind"]),
+            status=data["status"]
+            if isinstance(data.get("status"), DomainStatus)
+            else DomainStatus(data["status"]),
+            target_port=data.get("target_port"),
+            box_id=data.get("box_id"),
+            cloudflare_id=data.get("cloudflare_id"),
+            verification_payload=data.get("verification_payload"),
+            verification_errors=data.get("verification_errors"),
+            inserted_at=data.get("inserted_at", ""),
+            updated_at=data.get("updated_at", ""),
+        )
+
+    def _build_domain_meta(self, meta: Dict[str, Any]) -> DomainMeta:
+        """Convert API domain meta payload into DomainMeta model."""
+        meta = meta or {}
+        return DomainMeta(
+            managed_suffix=meta.get("managed_suffix", ""),
+            cname_target=meta.get("cname_target", ""),
+        )
+
+    def _build_domains_response(self, payload: Dict[str, Any]) -> DomainsResponse:
+        """Convert API payload into DomainsResponse model."""
+        data = payload.get("data", [])
+        meta = payload.get("meta", {})
+        return DomainsResponse(
+            data=[self._build_domain(item) for item in data],
+            meta=self._build_domain_meta(meta),
+        )
+
+    def _build_domain_response(self, payload: Dict[str, Any]) -> DomainResponse:
+        """Convert API payload into DomainResponse model."""
+        return DomainResponse(
+            data=self._build_domain(payload["data"]),
+            meta=self._build_domain_meta(payload.get("meta", {})),
+        )
 
     async def create_box(self, config: Optional[BoxConfig] = None) -> AsyncBoxHandle:
         """Create a box without automatic cleanup.

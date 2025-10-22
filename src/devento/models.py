@@ -4,7 +4,7 @@ import os
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Optional, Dict, Any, Callable
+from typing import Optional, Dict, Any, Callable, List
 
 
 class BoxStatus(str, Enum):
@@ -30,6 +30,23 @@ class CommandStatus(str, Enum):
     DONE = "done"
     FAILED = "failed"
     ERROR = "error"
+
+
+class DomainKind(str, Enum):
+    """Domain kind enum."""
+
+    MANAGED = "managed"
+    CUSTOM = "custom"
+
+
+class DomainStatus(str, Enum):
+    """Domain status enum."""
+
+    PENDING_DNS = "pending_dns"
+    PENDING_SSL = "pending_ssl"
+    ACTIVE = "active"
+    FAILED = "failed"
+    DISABLED = "disabled"
 
 
 @dataclass
@@ -208,3 +225,45 @@ class Snapshot:
     created_at: Optional[datetime] = None
     orchestrator_id: Optional[str] = None
     description: Optional[str] = None
+
+
+@dataclass
+class Domain:
+    """Represents a managed or custom domain."""
+
+    id: str
+    hostname: str
+    slug: Optional[str]
+    kind: DomainKind
+    status: DomainStatus
+    target_port: Optional[int]
+    box_id: Optional[str]
+    cloudflare_id: Optional[str]
+    verification_payload: Optional[Dict[str, Any]]
+    verification_errors: Optional[Dict[str, Any]]
+    inserted_at: str
+    updated_at: str
+
+
+@dataclass
+class DomainMeta:
+    """Metadata returned alongside domain records."""
+
+    managed_suffix: str
+    cname_target: str
+
+
+@dataclass
+class DomainsResponse:
+    """Response payload when listing domains."""
+
+    data: List[Domain]
+    meta: DomainMeta
+
+
+@dataclass
+class DomainResponse:
+    """Response payload for single domain operations."""
+
+    data: Domain
+    meta: DomainMeta

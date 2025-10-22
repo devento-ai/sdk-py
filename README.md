@@ -131,6 +131,48 @@ This feature is useful for:
 - Demonstrating web applications
 - Running services that need to be accessible from external systems
 
+### Domain Management
+
+Use the Domains API to manage managed and custom hostnames for your sandboxes:
+
+```python
+from devento import Devento, DomainKind, DomainStatus
+
+devento = Devento()
+
+# List existing domains and inspect metadata
+domains = devento.list_domains()
+print(f"Managed domains use the suffix: {domains.meta.managed_suffix}")
+
+# Create a managed domain (hostname derived from slug + managed suffix)
+managed = devento.create_domain(
+    kind=DomainKind.MANAGED,
+    slug="my-app",
+    box_id="box_123",  # Optional: assign later with update_domain
+    target_port=3000,
+)
+print(f"Managed hostname: {managed.data.hostname}")
+
+# Create a custom domain (must have a DNS CNAME pointing to edge.deven.to)
+devento.create_domain(
+    kind=DomainKind.CUSTOM,
+    hostname="api.example.com",
+    box_id="box_123",
+    target_port=443,
+)
+
+# Update routing for an existing domain
+devento.update_domain(
+    managed.data.id,
+    box_id="box_456",
+    target_port=8080,
+    status=DomainStatus.PENDING_DNS,
+)
+
+# Delete a domain when it is no longer needed
+devento.delete_domain(managed.data.id)
+```
+
 ### Port Exposing
 
 You can dynamically expose ports from inside the sandbox to random external ports. This is useful when you need to access services running inside the sandbox but don't know the port in advance or need multiple services:

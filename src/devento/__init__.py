@@ -12,7 +12,7 @@ Basic usage:
         print(result.stdout)
 """
 
-__version__ = "0.1.4"
+__version__ = "0.1.5"
 
 from .client import Devento, BoxHandle
 from .models import (
@@ -22,6 +22,12 @@ from .models import (
     CommandResult,
     CommandStatus,
     CommandOptions,
+    Domain,
+    DomainKind,
+    DomainStatus,
+    DomainResponse,
+    DomainsResponse,
+    DomainMeta,
     ExposedPort,
     Snapshot,
     SnapshotStatus,
@@ -59,6 +65,12 @@ __all__ = [
     "CommandResult",
     "CommandStatus",
     "CommandOptions",
+    "Domain",
+    "DomainKind",
+    "DomainStatus",
+    "DomainResponse",
+    "DomainsResponse",
+    "DomainMeta",
     "ExposedPort",
     "Snapshot",
     "SnapshotStatus",
