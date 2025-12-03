@@ -310,6 +310,7 @@ class TestDeventoClient:
         assert config.mib_ram is None
         assert config.timeout == 600
         assert config.metadata is None
+        assert config.watermark_enabled is None
 
         # Test with specific cpu and ram
         config = BoxConfig(cpu=2, mib_ram=4096)
@@ -322,6 +323,13 @@ class TestDeventoClient:
         assert config.mib_ram == 8192
         assert config.timeout == 1200
         assert config.metadata == {"env": "test"}
+
+        # Test with watermark_enabled
+        config = BoxConfig(watermark_enabled=False)
+        assert config.watermark_enabled is False
+
+        config = BoxConfig(watermark_enabled=True)
+        assert config.watermark_enabled is True
 
     @patch("devento.client.requests.Session")
     def test_box_handle_get_public_url(self, mock_session_class):
@@ -454,3 +462,111 @@ class TestDeventoClient:
             resume_call = mock_session.request.call_args_list[3]
             assert resume_call[0][0] == "POST"
             assert resume_call[0][1].endswith("/api/v2/boxes/box-pause-test/resume")
+
+    @patch("devento.client.requests.Session")
+    def test_create_box_with_watermark_enabled(self, mock_session_class):
+        """Test creating a box with watermark_enabled option."""
+        mock_session = Mock()
+        mock_session_class.return_value = mock_session
+
+        # Mock create box response
+        create_response = Mock()
+        create_response.status_code = 200
+        create_response.json.return_value = {"id": "box-watermark-test"}
+
+        mock_session.request.return_value = create_response
+
+        client = Devento(api_key="sk-devento-test")
+
+        # Test with watermark_enabled=False
+        config = BoxConfig(watermark_enabled=False)
+        box = client.create_box(config)
+
+        assert box.id == "box-watermark-test"
+
+        # Verify the request included watermark_enabled
+        create_call = mock_session.request.call_args_list[0]
+        assert create_call[0][0] == "POST"
+        assert create_call[1]["json"]["watermark_enabled"] is False
+
+    @patch("devento.client.requests.Session")
+    def test_box_handle_watermark_enabled_property(self, mock_session_class):
+        """Test BoxHandle.watermark_enabled property."""
+        mock_session = Mock()
+        mock_session_class.return_value = mock_session
+
+        # Mock create box response
+        create_response = Mock()
+        create_response.status_code = 200
+        create_response.json.return_value = {"id": "box-watermark-test"}
+
+        # Mock get box response with watermark_enabled
+        get_response = Mock()
+        get_response.status_code = 200
+        get_response.json.return_value = {
+            "data": {
+                "id": "box-watermark-test",
+                "status": "running",
+                "timeout": 3600,
+                "created_at": "2024-01-01T00:00:00Z",
+                "hostname": "box-watermark.deven.to",
+                "watermark_enabled": True,
+            }
+        }
+
+        mock_session.request.side_effect = [create_response, get_response]
+
+        client = Devento(api_key="sk-devento-test")
+        box = client.create_box()
+        box.refresh()
+
+        assert box.watermark_enabled is True
+
+    @patch("devento.client.requests.Session")
+    def test_box_handle_set_watermark(self, mock_session_class):
+        """Test BoxHandle.set_watermark method."""
+        mock_session = Mock()
+        mock_session_class.return_value = mock_session
+
+        # Mock create box response
+        create_response = Mock()
+        create_response.status_code = 200
+        create_response.json.return_value = {"id": "box-watermark-test"}
+
+        # Mock PATCH response for set_watermark
+        patch_response = Mock()
+        patch_response.status_code = 200
+        patch_response.json.return_value = {}
+
+        # Mock get box response after set_watermark (refresh)
+        get_response = Mock()
+        get_response.status_code = 200
+        get_response.json.return_value = {
+            "data": {
+                "id": "box-watermark-test",
+                "status": "running",
+                "timeout": 3600,
+                "created_at": "2024-01-01T00:00:00Z",
+                "hostname": "box-watermark.deven.to",
+                "watermark_enabled": False,
+            }
+        }
+
+        mock_session.request.side_effect = [
+            create_response,
+            patch_response,
+            get_response,
+        ]
+
+        client = Devento(api_key="sk-devento-test")
+        box = client.create_box()
+        box.set_watermark(False)
+
+        # Verify PATCH request was made with correct payload
+        patch_call = mock_session.request.call_args_list[1]
+        assert patch_call[0][0] == "PATCH"
+        assert patch_call[0][1].endswith("/api/v2/boxes/box-watermark-test")
+        assert patch_call[1]["json"]["watermark_enabled"] is False
+
+        # Verify the watermark_enabled property is updated after refresh
+        assert box.watermark_enabled is False

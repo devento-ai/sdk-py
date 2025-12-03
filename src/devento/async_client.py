@@ -236,6 +236,25 @@ class AsyncBoxHandle:
         await self._client._request("POST", f"/api/v2/boxes/{self.id}/resume")
         await self.refresh()
 
+    @property
+    def watermark_enabled(self) -> Optional[bool]:
+        """Get whether the watermark is enabled for this sandbox's web previews."""
+        return self._box.watermark_enabled if self._box else None
+
+    async def set_watermark(self, enabled: bool) -> None:
+        """Set whether the watermark should be displayed for this sandbox's web previews.
+
+        Args:
+            enabled: Whether to enable the watermark
+
+        Raises:
+            DeventoError: If the watermark setting cannot be updated
+        """
+        await self._client._request(
+            "PATCH", f"/api/v2/boxes/{self.id}", json={"watermark_enabled": enabled}
+        )
+        await self.refresh()
+
     async def list_snapshots(self) -> List[Snapshot]:
         """List all snapshots for this box.
 
@@ -466,6 +485,9 @@ class AsyncDevento:
 
         if config.metadata:
             payload["metadata"] = config.metadata
+
+        if config.watermark_enabled is not None:
+            payload["watermark_enabled"] = config.watermark_enabled
 
         return await self._request("POST", "/api/v2/boxes", json=payload)
 

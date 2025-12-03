@@ -57,6 +57,7 @@ class BoxConfig:
     mib_ram: Optional[int] = None
     timeout: Optional[int] = 600
     metadata: Optional[Dict[str, Any]] = None
+    watermark_enabled: Optional[bool] = None
 
     def __post_init__(self):
         # Check environment variables for defaults
@@ -115,6 +116,7 @@ class Box:
     ip_address: Optional[str] = None
     resources: Optional[Dict[str, Any]] = None
     runtime_seconds: Optional[int] = None
+    watermark_enabled: Optional[bool] = None
 
     def get_public_url(self, port: int) -> str:
         """Get the public web URL for accessing a specific port on the box.
